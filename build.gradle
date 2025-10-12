@@ -1,0 +1,60 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.5.6'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.chicken'
+version = '0.0.1-SNAPSHOT'
+description = 'chicken-system'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17) // Boot 3.5 supports 17+ (21 LTS recommended)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+    developmentOnly
+    runtimeClasspath {
+        extendsFrom developmentOnly
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // --- Starters (Servlet/MVC stack) ---
+    implementation 'org.springframework.boot:spring-boot-starter-web'           // Tomcat + MVC
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'    // @Valid, @NotNull, etc.
+
+    // --- DB Driver ---
+    runtimeOnly 'com.mysql:mysql-connector-j'                                   // version managed by Boot
+
+    // --- Quality of life ---
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor' // metadata for application.properties hints
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'             // auto-restart (disabled in prod)
+
+    // --- Testing ---
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'      // JUnit 5, Mockito, AssertJ
+    testImplementation 'org.springframework.security:spring-security-test'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs += ['-parameters']
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
