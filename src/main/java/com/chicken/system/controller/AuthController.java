@@ -1,16 +1,14 @@
 package com.chicken.system.controller;
 
+import com.chicken.system.dto.RegisterRequest;
 import com.chicken.system.entity.User;
 import com.chicken.system.enums.Role;
 import com.chicken.system.services.UserServices;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
-
-import jakarta.validation.Valid;
 
 @Controller
 @RequestMapping("/auth")
@@ -22,43 +20,47 @@ public class AuthController {
         this.userServices = userServices;
     }
 
-    // Provide a default form object for both GET and failed POST renders
+    @InitBinder("form")
+    public void initTrim(WebDataBinder binder) {
+        // prevent "spaces" from passing @NotBlank (optional but handy)
+        binder.registerCustomEditor(String.class, new org.springframework.beans.propertyeditors.StringTrimmerEditor(true));
+    }
+
     @ModelAttribute("form")
     public RegisterRequest form() {
         return new RegisterRequest("", "", "", "", "", false);
     }
 
-    // --- LOGIN ---
     @GetMapping("/login")
     public String loginPage() {
         return "auth/login";
     }
 
-    // --- REGISTER ---
     @GetMapping("/register")
     public String registerPage() {
         return "auth/register";
     }
 
     @PostMapping("/register")
-    public String doRegister(@Valid @ModelAttribute("form") RegisterRequest form,
-                             BindingResult result) {
+    public String doRegister(
+            @Validated(RegisterRequest.Ordered.class) @ModelAttribute("form") RegisterRequest form,
+            BindingResult result) {
 
         if (result.hasErrors()) return "auth/register";
 
-        if (!form.password().equals(form.confirmPassword())) {
+        if (!form.getPassword().equals(form.getConfirmPassword())) {
             result.rejectValue("confirmPassword", "mismatch", "Passwords do not match");
             return "auth/register";
         }
 
         try {
             User u = new User();
-            u.setFullName(form.fullName());
-            u.setUsername(form.username());
-            u.setEmail(form.email());
+            u.setFullName(form.getFullName());
+            u.setUsername(form.getUsername());
+            u.setEmail(form.getEmail());
             u.setRole(form.isAdmin() ? Role.ADMIN : Role.USER);
 
-            userServices.registerUser(u, form.password());
+            userServices.registerUser(u, form.getPassword());
         } catch (IllegalArgumentException ex) {
             result.reject("registration_error", ex.getMessage());
             return "auth/register";
@@ -66,14 +68,4 @@ public class AuthController {
 
         return "redirect:/auth/login?registered";
     }
-
-    // --- DTO for registration ---
-    public record RegisterRequest(
-            @Size(max = 150) String fullName,
-            @NotBlank @Size(min = 3, max = 60) String username,
-            @NotBlank @Email @Size(max = 160) String email,
-            @NotBlank @Size(min = 8, max = 100) String password,
-            @NotBlank @Size(min = 8, max = 100) String confirmPassword,
-            boolean isAdmin
-    ) {}
 }

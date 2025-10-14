@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Actuators • Chicken System</title>
+  <link th:href="@{/css/theme.css}" rel="stylesheet"/>
+
+  <!-- CSRF for AJAX -->
+  <meta name="_csrf" th:content="${_csrf.token}"/>
+  <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+  <style>
+    body{ background:var(--bg); font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink) }
+    .page{ width:min(96vw,1600px); margin:0 auto; padding:18px 0 }
+    .layout{ display:grid; grid-template-columns: 280px 1fr; gap:18px }
+    @media (max-width:1100px){ .layout{ grid-template-columns:1fr } }
+    .card{ background:var(--card); border:1px solid var(--bd); border-radius:16px; box-shadow:0 16px 36px rgba(2,141,24,.08); padding:16px }
+    .header-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px }
+    .muted{ color:var(--muted) }
+    .grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px }
+
+    .act-card{ border:1px solid var(--bd); border-radius:14px; padding:16px; background:#fff }
+    .act-title{ display:flex; align-items:center; gap:10px; font-weight:900; margin-bottom:8px }
+    .status-dot{ width:10px; height:10px; border-radius:50% }
+    .status-on{ background:#10b981; box-shadow:0 0 0 4px rgba(16,185,129,.15) }
+    .status-off{ background:#9ca3af }
+
+    .btn{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:12px; border:1px solid var(--bd); background:#fff; font-weight:800; cursor:pointer }
+    .btn:hover{ background:#f2faf3 }
+    .btn-primary{ background:linear-gradient(135deg,var(--brand),var(--brand-2)); color:#fff; border:0; box-shadow:0 12px 24px rgba(2,141,24,.22) }
+
+    .actions{ display:flex; gap:8px; flex-wrap:wrap }
+    .updated{ font-size:.9rem; color:var(--muted); margin-top:6px }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <div th:replace="~{common/navbar :: navbar}"></div>
+
+  <div class="page">
+    <div class="layout">
+      <!-- Sidebar -->
+      <div th:replace="~{common/sidebar :: sidebar('actuators')}"></div>
+
+      <!-- Content -->
+      <main style="align-self:start">
+        <div class="card">
+          <div class="header-row">
+            <div>
+              <h2 style="margin:0">Actuators</h2>
+              <div class="muted tiny">Control Pump & Fan in real time</div>
+            </div>
+            <div class="muted tiny">
+              <span id="lastUpdated" th:text="${state.updatedAt} ?: '—'">—</span>
+            </div>
+          </div>
+
+          <div class="grid">
+            <!-- Pump -->
+            <div class="act-card">
+              <div class="act-title">
+                <div id="pumpDot" class="status-dot"
+                     th:classappend="${state.pumpOn} ? ' status-on' : ' status-off'"></div>
+                <div>Pump</div>
+              </div>
+              <div class="muted" id="pumpLabel" th:text="${state.pumpOn} ? 'ON' : 'OFF'">OFF</div>
+              <div class="actions" style="margin-top:10px">
+                <button class="btn btn-primary" id="pumpToggle">Toggle</button>
+                <button class="btn" id="pumpOn">Turn ON</button>
+                <button class="btn" id="pumpOff">Turn OFF</button>
+              </div>
+            </div>
+
+            <!-- Fan -->
+            <div class="act-card">
+              <div class="act-title">
+                <div id="fanDot" class="status-dot"
+                     th:classappend="${state.fanOn} ? ' status-on' : ' status-off'"></div>
+                <div>Fan</div>
+              </div>
+              <div class="muted" id="fanLabel" th:text="${state.fanOn} ? 'ON' : 'OFF'">OFF</div>
+              <div class="actions" style="margin-top:10px">
+                <button class="btn btn-primary" id="fanToggle">Toggle</button>
+                <button class="btn" id="fanOn">Turn ON</button>
+                <button class="btn" id="fanOff">Turn OFF</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="updated">Auto-refreshing status every 3s…</div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div th:replace="~{common/footer :: footer}"></div>
+
+  <!-- Keep Thymeleaf away from our JS -->
+  <script th:inline="none">
+    const csrfToken  = document.querySelector('meta[name="_csrf"]')?.content || '';
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+
+    const pumpDot   = document.getElementById('pumpDot');
+    const pumpLabel = document.getElementById('pumpLabel');
+    const fanDot    = document.getElementById('fanDot');
+    const fanLabel  = document.getElementById('fanLabel');
+    const lastUpd   = document.getElementById('lastUpdated');
+
+    function applyState(s){
+      const setUI = (on, dot, label) => {
+        dot.classList.remove('status-on','status-off');
+        dot.classList.add(on ? 'status-on' : 'status-off');
+        label.textContent = on ? 'ON' : 'OFF';
+      };
+      setUI(!!s.pumpOn, pumpDot, pumpLabel);
+      setUI(!!s.fanOn,  fanDot,  fanLabel);
+      if(s.updatedAt) lastUpd.textContent = s.updatedAt;
+    }
+
+    async function getState(){
+      const res = await fetch('/actuators/state', { headers: { 'Accept':'application/json' } });
+      if(!res.ok) return;
+      const s = await res.json();
+      applyState(s);
+    }
+
+    async function post(url){
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Accept':'application/json',
+          'Content-Type':'application/json',
+          [csrfHeader]: csrfToken
+        },
+        body: '{}' // keep Spring happy for POST
+      });
+      if(!res.ok){
+        const txt = await res.text();
+        alert('Failed: ' + txt);
+        return;
+      }
+      const s = await res.json();
+      applyState(s);
+    }
+
+    // Wire controls
+    document.addEventListener('DOMContentLoaded', ()=>{
+      document.getElementById('pumpToggle').addEventListener('click', ()=> post('/actuators/pump/toggle'));
+      document.getElementById('pumpOn').addEventListener('click',     ()=> post('/actuators/pump/on'));
+      document.getElementById('pumpOff').addEventListener('click',    ()=> post('/actuators/pump/off'));
+
+      document.getElementById('fanToggle').addEventListener('click',  ()=> post('/actuators/fan/toggle'));
+      document.getElementById('fanOn').addEventListener('click',      ()=> post('/actuators/fan/on'));
+      document.getElementById('fanOff').addEventListener('click',     ()=> post('/actuators/fan/off'));
+
+      // initial state + polling
+      getState();
+      setInterval(getState, 3000);
+    });
+  </script>
+</body>
+</html>

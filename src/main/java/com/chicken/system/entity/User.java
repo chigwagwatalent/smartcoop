@@ -12,16 +12,16 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(
-        name = "users",
-        uniqueConstraints = {
-                @UniqueConstraint(name = "uk_users_username", columnNames = {"username"}),
-                @UniqueConstraint(name = "uk_users_email", columnNames = {"email"})
-        },
-        indexes = {
-                @Index(name = "idx_users_username", columnList = "username"),
-                @Index(name = "idx_users_email", columnList = "email"),
-                @Index(name = "idx_users_role", columnList = "role")
-        }
+    name = "users",
+    uniqueConstraints = {
+        @UniqueConstraint(name = "uk_users_username", columnNames = {"username"}),
+        @UniqueConstraint(name = "uk_users_email", columnNames = {"email"})
+    },
+    indexes = {
+        @Index(name = "idx_users_username", columnList = "username"),
+        @Index(name = "idx_users_email", columnList = "email"),
+        @Index(name = "idx_users_role", columnList = "role")
+    }
 )
 public class User {
 
@@ -29,7 +29,6 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** Display name for UI (optional) */
     @Size(max = 150)
     private String fullName;
 
@@ -44,18 +43,15 @@ public class User {
     @Column(nullable = false)
     private String email;
 
-    /** Store a BCrypt hash, NEVER plain text */
     @NotBlank
     @Size(min = 8, max = 100)
     @Column(name = "password_hash", nullable = false, length = 100)
     private String passwordHash;
 
-    /** ADMIN, USER, etc. */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
-    private Role role = Role.ADMIN;
+    private Role role = Role.USER;
 
-    /** Basic account flags */
     @Column(nullable = false)
     private boolean enabled = true;
 
@@ -69,8 +65,6 @@ public class User {
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updatedAt;
-
-    // --- getters & setters ---
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

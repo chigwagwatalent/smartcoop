@@ -1,15 +1,63 @@
 <!DOCTYPE html>
-<!--
-Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
-Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this template
--->
-<html>
-    <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body>
-        <div>TODO write content</div>
-    </body>
+<html xmlns:th="http://www.thymeleaf.org">
+<head></head>
+<body>
+<th:block th:fragment="navbar">
+  <style>
+    .nav-wrap{ position:sticky; top:0; z-index:1000; background:#fff; border-bottom:1px solid var(--bd); backdrop-filter: blur(6px); }
+    .nav-inner{ width:min(96vw, 1600px); margin:0 auto; padding:10px 12px; display:flex; align-items:center; justify-content:space-between; gap:14px; }
+    .brand-badge{ width:40px; height:40px; border-radius:12px; display:grid; place-items:center; color:#fff;
+      background: linear-gradient(135deg, var(--brand), var(--brand-2)); box-shadow: 0 8px 18px rgba(2,141,24,.22); font-size:20px; }
+    .brand-title{ font-weight:800; color:var(--ink); font-size:1.05rem }
+    .nav-left{ display:flex; align-items:center; gap:10px }
+    .nav-right{ display:flex; align-items:center; gap:14px }
+    .status-dot{ width:10px; height:10px; border-radius:999px; background:var(--success); box-shadow:0 0 0 3px #ecfdf5 }
+    .user{ position:relative; display:flex; align-items:center; gap:10px; cursor:pointer; padding:6px 8px; border-radius:10px; border:1px solid var(--bd); background:#fff; }
+    .avatar{ width:32px; height:32px; border-radius:50%; background: linear-gradient(135deg,#8bdc65,#4bb543); color:#fff; font-weight:800;
+      display:grid; place-items:center; box-shadow:0 6px 12px rgba(2,141,24,.15); user-select:none; }
+    .chev{ font-size:12px; color:var(--muted) }
+    .menu{ position:absolute; right:0; top:46px; background:#fff; border:1px solid var(--bd); border-radius:12px; min-width:200px;
+      box-shadow:0 20px 40px rgba(0,0,0,.08); padding:8px; display:none; }
+    .menu a{ display:flex; align-items:center; gap:10px; color:var(--ink); text-decoration:none; padding:10px 10px; border-radius:10px; }
+    .menu a:hover{ background:#f2faf3 }
+    .user.open .menu{ display:block }
+  </style>
+
+  <header class="nav-wrap">
+    <div class="nav-inner">
+      <div class="nav-left">
+        <div class="brand-badge">🐣</div>
+        <div class="brand-title">Chicken System</div>
+      </div>
+
+      <div class="nav-right">
+        <div class="tiny" style="color:var(--muted)">Status:</div>
+        <span class="status-dot" id="navbar-status-dot"></span>
+
+        <!-- User avatar / dropdown -->
+        <div class="user" id="userMenu">
+          <span class="avatar" th:text="${currentUser.initial}">U</span>
+          <span class="tiny" style="color:var(--ink); font-weight:700" th:text="${currentUser.name}">User</span>
+          <span class="chev">▾</span>
+
+          <div class="menu" id="userDropdown">
+            <a th:href="@{/profile}">👤 Profile</a>
+            <a th:href="@{/settings}">⚙️ Settings</a>
+            <a th:href="@{/logout}">🚪 Logout</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <script>
+    (function(){
+      const user = document.getElementById('userMenu');
+      if(!user) return;
+      user.addEventListener('click', (e)=>{ user.classList.toggle('open'); e.stopPropagation(); });
+      document.addEventListener('click', ()=> user.classList.remove('open'));
+    })();
+  </script>
+</th:block>
+</body>
 </html>

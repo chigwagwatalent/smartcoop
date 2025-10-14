@@ -1,15 +1,219 @@
 <!DOCTYPE html>
-<!--
-Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
-Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this template
--->
-<html>
-    <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body>
-        <div>TODO write content</div>
-    </body>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Dashboard • Chicken System</title>
+  <link th:href="@{/css/theme.css}" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+  <style>
+    body{
+      background:var(--bg);
+      font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--ink);
+    }
+    .page{
+      width:min(96vw, 1600px); margin:0 auto; padding:18px 0;
+    }
+    .layout{
+      display:grid; grid-template-columns: 280px 1fr; gap:18px;
+    }
+    @media (max-width: 1100px){ .layout{ grid-template-columns: 1fr } }
+
+    .grid{ display:grid; gap:14px }
+    .grid-3{ grid-template-columns: repeat(3, minmax(0,1fr)) }
+    @media (max-width:1100px){ .grid-3{ grid-template-columns: 1fr } }
+
+    .card{
+      background: var(--card); border:1px solid var(--bd); border-radius:16px;
+      box-shadow: 0 16px 36px rgba(2,141,24,.08); padding:16px;
+    }
+    .kpi{ display:flex; gap:12px; align-items:center }
+    .kpi .icon{
+      width:48px; height:48px; border-radius:12px; display:grid; place-items:center; color:#fff;
+      background: linear-gradient(135deg, var(--brand), var(--brand-2)); box-shadow: 0 12px 22px rgba(2,141,24,.20);
+      font-size:22px;
+    }
+    .kpi .label{ color: var(--muted); font-weight:700 }
+    .kpi .value{ font-size:1.9rem; font-weight:900 }
+
+    .pill{ font-weight:800; font-size:.92rem; padding:6px 12px; border-radius:999px; border:1px solid var(--bd); color:var(--muted) }
+    h3{ margin:0 0 12px; font-size:1.05rem }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <div th:replace="~{common/navbar :: navbar}"></div>
+
+  <div class="page">
+    <div class="layout">
+      <!-- Sidebar -->
+      <div th:replace="~{common/sidebar :: sidebar('dashboard')}"></div>
+
+      <!-- Content -->
+      <main class="grid" style="align-self:start">
+        <!-- KPIs Row 1 -->
+        <section class="grid grid-3">
+          <div class="card">
+            <div class="kpi">
+              <div class="icon">🌡️</div>
+              <div>
+                <div class="label">Temperature (°C)</div>
+                <div class="value" id="kpi-temp" th:text="${summary.temperatureC}">0</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="kpi">
+              <div class="icon">💧</div>
+              <div>
+                <div class="label">Humidity (%)</div>
+                <div class="value" id="kpi-hum" th:text="${summary.humidityPct}">0</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="kpi">
+              <div class="icon">🛢️</div>
+              <div>
+                <div class="label">Water Level (%)</div>
+                <div class="value" id="kpi-level" th:text="${summary.waterLevelPct}">0</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- KPIs Row 2 -->
+        <section class="grid grid-3">
+          <div class="card">
+            <div class="kpi">
+              <div class="icon">🐥</div>
+              <div>
+                <div class="label">Chicks Count</div>
+                <div class="value" id="kpi-chicks" th:text="${summary.chicksCount}">0</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="kpi">
+              <div class="icon">🚰</div>
+              <div>
+                <div class="label">Pump</div>
+                <div class="value"><span id="kpi-pump" class="pill">OFF</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="kpi">
+              <div class="icon">🌀</div>
+              <div>
+                <div class="label">Fan</div>
+                <div class="value"><span id="kpi-fan" class="pill">OFF</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Charts -->
+        <section class="grid">
+          <div class="card">
+            <h3>Environment Trends</h3>
+            <canvas id="iotChart" height="120"></canvas>
+          </div>
+          <div class="card">
+            <h3>Chicks Count Over Time</h3>
+            <canvas id="stockChart" height="120"></canvas>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div th:replace="~{common/footer :: footer}"></div>
+
+  <script>
+    function setPumpFan(pumpOn, fanOn){
+      const pump = document.getElementById('kpi-pump');
+      const fan  = document.getElementById('kpi-fan');
+      pump.textContent = pumpOn===1 ? 'ON' : 'OFF';
+      fan.textContent  = fanOn===1  ? 'ON' : 'OFF';
+      const onBg='#ecfdf5', onBd='#a7f3d0', onInk='#065f46';
+      const offBg='#fff', offBd=getComputedStyle(document.documentElement).getPropertyValue('--bd'), offInk='#6b7a70';
+      pump.style.background = pumpOn===1 ? onBg : offBg;
+      fan .style.background = fanOn===1  ? onBg : offBg;
+      pump.style.borderColor= pumpOn===1 ? onBd : offBd;
+      fan .style.borderColor= fanOn===1  ? onBd : offBd;
+      pump.style.color      = pumpOn===1 ? onInk: offInk;
+      fan .style.color      = fanOn===1  ? onInk: offInk;
+    }
+
+    async function fetchJSON(url){
+      const r = await fetch(url, { headers:{'Accept':'application/json'} });
+      return r.json();
+    }
+
+    let iotChart, stockChart;
+
+    async function loadSummary(){
+      try{
+        const s = await fetchJSON('/api/dashboard/summary');
+        document.getElementById('kpi-temp').textContent   = s.temperatureC ?? 0;
+        document.getElementById('kpi-hum').textContent    = s.humidityPct ?? 0;
+        document.getElementById('kpi-level').textContent  = s.waterLevelPct ?? 0;
+        document.getElementById('kpi-chicks').textContent = s.chicksCount ?? 0;
+        setPumpFan(s.pumpOn ?? 0, s.fanOn ?? 0);
+      }catch(e){ console.error(e); }
+    }
+
+    async function loadIotChart(){
+      const data = await fetchJSON('/api/dashboard/iot/timeseries');
+      const ctx  = document.getElementById('iotChart').getContext('2d');
+      if(iotChart){ iotChart.destroy(); }
+      iotChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.labels,
+          datasets: [
+            { label: 'Temperature (°C)', data: data.temperatureC },
+            { label: 'Humidity (%)',     data: data.humidityPct },
+            { label: 'Water Level (%)',  data: data.waterLevelPct }
+          ]
+        },
+        options: {
+          responsive: true,
+          interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { position: 'top' } },
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+      });
+    }
+
+    async function loadStockChart(){
+      const data = await fetchJSON('/api/dashboard/stock/timeseries');
+      const ctx  = document.getElementById('stockChart').getContext('2d');
+      if(stockChart){ stockChart.destroy(); }
+      stockChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels: data.labels, datasets: [{ label: 'Chicks', data: data.chicksCount }] },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'top' } },
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+      });
+    }
+
+    (async function init(){
+      await loadSummary();
+      await loadIotChart();
+      await loadStockChart();
+      setInterval(loadSummary, 10000);
+      setInterval(loadIotChart, 30000);
+      setInterval(loadStockChart, 30000);
+    })();
+  </script>
+</body>
 </html>

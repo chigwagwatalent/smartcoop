@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Chickens • Chicken System</title>
+  <link th:href="@{/css/theme.css}" rel="stylesheet"/>
+  <style>
+    body{ background:var(--bg); font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink) }
+    .page{ width:min(96vw,1600px); margin:0 auto; padding:18px 0 }
+    .layout{ display:grid; grid-template-columns: 280px 1fr; gap:18px }
+    @media (max-width:1100px){ .layout{ grid-template-columns:1fr } }
+    .card{ background:var(--card); border:1px solid var(--bd); border-radius:16px; box-shadow:0 16px 36px rgba(2,141,24,.08); padding:16px }
+    .header-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px }
+    .btn{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:12px; border:1px solid var(--bd); background:#fff; font-weight:800; cursor:pointer }
+    .btn:hover{ background:#f2faf3 }
+    .btn-primary{ background:linear-gradient(135deg,var(--brand),var(--brand-2)); color:#fff; border:0; box-shadow:0 12px 24px rgba(2,141,24,.22) }
+    .muted{ color:var(--muted) }
+    table{ width:100%; border-collapse:separate; border-spacing:0 }
+    thead th{ text-align:left; padding:12px; border-bottom:1px solid var(--bd); color:var(--muted); font-weight:800; position:sticky; top:0; background:#fff; z-index:1 }
+    tbody td{ padding:12px; border-bottom:1px solid var(--bd) }
+    tbody tr:hover{ background:#f7fbf8 }
+    .pagination{ display:flex; gap:10px; align-items:center; justify-content:flex-end; padding-top:10px }
+    .page-btn{ border:1px solid var(--bd); background:#fff; border-radius:10px; padding:8px 12px; cursor:pointer; font-weight:700; text-decoration:none; color:inherit }
+    .page-btn[disabled]{ opacity:.4; cursor:not-allowed }
+    .page-info{ color:var(--muted); font-weight:700 }
+    .modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; align-items:center; justify-content:center; z-index:2000 }
+    .modal-backdrop.show{ display:flex }
+    .modal{ width:min(92vw,520px); background:#fff; border:1px solid var(--bd); border-radius:16px; box-shadow:0 26px 60px rgba(0,0,0,.18); padding:16px }
+    .modal-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px }
+    .modal-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:12px }
+    .field{ margin:10px 0 }
+    .field label{ display:block; font-weight:700; margin-bottom:6px }
+    .input{ display:flex; align-items:center; border:1.5px solid var(--bd); border-radius:12px; background:#fff; padding: 10px 12px }
+    .input input{ border:0; outline:0; width:100%; font-size:1rem; background:transparent; color:var(--ink) }
+    .error{ color:#b91c1c; font-weight:700; font-size:.9rem }
+    @media print{
+      .nav-wrap, aside, .header-row, .pagination, footer, .modal-backdrop{ display:none !important }
+      body{ background:#fff }
+      .page{ width:100%; margin:0; padding:0 }
+      .card{ border:1px solid #ddd; box-shadow:none }
+      thead th{ position:static }
+    }
+  </style>
+</head>
+<body>
+  <div th:replace="~{common/navbar :: navbar}"></div>
+
+  <div class="page">
+    <div class="layout">
+      <div th:replace="~{common/sidebar :: sidebar('stock')}"></div>
+
+      <main style="align-self:start">
+        <div class="card">
+          <div class="header-row">
+            <div>
+              <h2 style="margin:0">Chickens / Stock</h2>
+              <div class="muted tiny">Track the number of chicks per coop over time</div>
+            </div>
+            <div style="display:flex; gap:8px">
+              <form th:action="@{/stock}" method="get" style="display:flex; gap:8px; align-items:center">
+                <input type="hidden" name="page" th:value="${pageIndex}"/>
+                <select name="size" class="page-btn" style="padding-right:30px" onchange="this.form.submit()">
+                  <option th:selected="${size==10}">10</option>
+                  <option th:selected="${size==20}">20</option>
+                  <option th:selected="${size==50}">50</option>
+                </select>
+              </form>
+              <button type="button" class="btn" onclick="window.print()">🖨 Print</button>
+              <button type="button" class="btn btn-primary" id="addBtn">➕ Add</button>
+            </div>
+          </div>
+
+          <div style="overflow:auto; max-height:65vh">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px">Timestamp</th>
+                  <th>Coop ID</th>
+                  <th>Chicks Count</th>
+                  <th style="width:200px">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="row : ${page.content}">
+                  <td th:text="${#temporals.format(row.createdAt,'yyyy-MM-dd HH:mm:ss')}">2025-01-01 12:00:00</td>
+                  <td th:text="${row.coopId}">COOP-A1</td>
+                  <td th:text="${row.chicksCount}">0</td>
+                  <td>
+                    <button type="button" class="btn"
+                            th:attr="data-id=${row.id},data-coop=${row.coopId},data-count=${row.chicksCount}"
+                            onclick="openEdit(this)">✎ Edit</button>
+                    <form th:action="@{/stock/delete}" method="post" style="display:inline">
+                      <input type="hidden" name="id" th:value="${row.id}"/>
+                      <input type="hidden" name="page" th:value="${pageIndex}"/>
+                      <input type="hidden" name="size" th:value="${size}"/>
+                      <button type="submit" class="btn" style="background:#fee2e2; border-color:#fecaca">🗑 Delete</button>
+                    </form>
+                  </td>
+                </tr>
+                <tr th:if="${page.content.isEmpty()}">
+                  <td colspan="4" class="muted">No records yet.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pagination">
+            <a class="page-btn" th:href="@{/stock(page=${pageIndex-1},size=${size})}" th:if="${page.hasPrevious()}">← Prev</a>
+            <span class="page-info">Page <span th:text="${pageIndex+1}">1</span> / <span th:text="${page.totalPages > 0 ? page.totalPages : 1}">1</span></span>
+            <a class="page-btn" th:href="@{/stock(page=${pageIndex+1},size=${size})}" th:if="${page.hasNext()}">Next →</a>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div th:replace="~{common/footer :: footer}"></div>
+
+  <!-- Create/Edit Modal -->
+  <!-- IMPORTANT: we no longer use #fields outside the form; use openModal flag instead -->
+  <div class="modal-backdrop" id="editModal"
+       th:classappend="${openModal} ? ' show' : ''"
+       aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <h3 id="modalTitle" style="margin:0" th:text="${form.id}==null ? 'Add Stock' : 'Edit Stock'">Add Stock</h3>
+        <button type="button" class="btn" onclick="closeModal('#editModal')">✖</button>
+      </div>
+
+      <form th:action="@{/stock/save}" th:object="${form}" method="post">
+        <input type="hidden" name="page" th:value="${pageIndex}"/>
+        <input type="hidden" name="size" th:value="${size}"/>
+        <input type="hidden" th:field="*{id}"/>
+
+        <div class="field">
+          <label for="fCoopId">Coop ID</label>
+          <div class="input"><input id="fCoopId" th:field="*{coopId}" placeholder="COOP-A1"/></div>
+          <div class="error" th:if="${#fields.hasErrors('coopId')}" th:errors="*{coopId}">Invalid</div>
+        </div>
+
+        <div class="field">
+          <label for="fCount">Chicks Count</label>
+          <div class="input"><input id="fCount" type="number" min="0" th:field="*{chicksCount}" placeholder="0"/></div>
+          <div class="error" th:if="${#fields.hasErrors('chicksCount')}" th:errors="*{chicksCount}">Invalid</div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn" onclick="closeModal('#editModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script th:inline="javascript">
+    function openModal(sel){
+      const el = document.querySelector(sel);
+      if(!el) return;
+      el.classList.add('show');
+      el.setAttribute('aria-hidden','false');
+      const input = el.querySelector('input,button,select,textarea');
+      if(input) setTimeout(()=> input.focus(),0);
+      el.addEventListener('click',(e)=>{ if(e.target===el) closeModal(sel); }, {once:true});
+    }
+    function closeModal(sel){
+      const el = document.querySelector(sel);
+      if(!el) return;
+      el.classList.remove('show');
+      el.setAttribute('aria-hidden','true');
+    }
+
+    // “Add” button -> open empty create form (client-side)
+    document.getElementById('addBtn')?.addEventListener('click', ()=>{
+      const idEl = document.querySelector('#editModal [name="id"]');
+      const coopEl = document.getElementById('fCoopId');
+      const cntEl = document.getElementById('fCount');
+      if (idEl) idEl.value = '';
+      if (coopEl) coopEl.value = '';
+      if (cntEl) cntEl.value = '';
+      document.getElementById('modalTitle').textContent = 'Add Stock';
+      openModal('#editModal');
+    });
+
+    // Edit button -> fill fields and open
+    function openEdit(btn){
+      const id   = btn.getAttribute('data-id');
+      const coop = btn.getAttribute('data-coop');
+      const cnt  = btn.getAttribute('data-count');
+      document.querySelector('#editModal [name="id"]').value = id;
+      document.getElementById('fCoopId').value = coop;
+      document.getElementById('fCount').value = cnt;
+      document.getElementById('modalTitle').textContent = 'Edit Stock';
+      openModal('#editModal');
+    }
+  </script>
+</body>
+</html>

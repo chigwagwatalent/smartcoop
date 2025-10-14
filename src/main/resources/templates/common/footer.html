@@ -1,15 +1,14 @@
 <!DOCTYPE html>
-<!--
-Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
-Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this template
--->
-<html>
-    <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body>
-        <div>TODO write content</div>
-    </body>
+<html xmlns:th="http://www.thymeleaf.org">
+<head></head>
+<body>
+<th:block th:fragment="footer">
+  <footer style="border-top:1px solid var(--bd);background:#fff;margin-top:20px">
+    <div style="width:min(96vw,1600px);margin:0 auto;padding:14px 16px;color:var(--muted);display:flex;justify-content:space-between">
+      <span>© <span th:text="${#dates.format(#dates.createNow(),'yyyy')}">2025</span> Chicken System</span>
+      <span>Powered by <strong style="color:var(--brand)">ScriptMaster</strong></span>
+    </div>
+  </footer>
+</th:block>
+</body>
 </html>

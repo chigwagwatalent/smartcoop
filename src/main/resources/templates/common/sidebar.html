@@ -1,15 +1,48 @@
 <!DOCTYPE html>
-<!--
-Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
-Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this template
--->
-<html>
-    <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body>
-        <div>TODO write content</div>
-    </body>
+<html xmlns:th="http://www.thymeleaf.org">
+<head></head>
+<body>
+<th:block th:fragment="sidebar(active)">
+  <aside style="position:sticky;top:64px;align-self:start;width:280px;background:#fff;border-right:1px solid var(--bd);min-height:calc(100dvh - 64px)">
+    <nav style="padding:14px">
+      <div style="font-weight:800;color:var(--muted);letter-spacing:.03em;margin-bottom:10px">Modules</div>
+      <ul style="list-style:none;padding:0;margin:0;display:grid;gap:8px">
+        <li>
+          <a th:href="@{/dashboard}" th:classappend="${active}=='dashboard' ? 'active' : ''"
+             style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;border:1px solid var(--bd);text-decoration:none;color:var(--ink)">
+            <span>📊</span><span>Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a th:href="@{/iot}" th:classappend="${active}=='iot' ? 'active' : ''"
+             style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;border:1px solid var(--bd);text-decoration:none;color:var(--ink)">
+            <span>🌡️</span><span>Coop Readings</span>
+          </a>
+        </li>
+        <li>
+          <a th:href="@{/stock}" th:classappend="${active}=='stock' ? 'active' : ''"
+             style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;border:1px solid var(--bd);text-decoration:none;color:var(--ink)">
+            <span>🐥</span><span>Chicken Records</span>
+          </a>
+        </li>
+
+        <!-- NEW: Users link -->
+        <li>
+          <a th:href="@{/users}" th:classappend="${active}=='users' ? 'active' : ''"
+             style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;border:1px solid var(--bd);text-decoration:none;color:var(--ink)">
+            <span>👤</span><span>Users</span>
+          </a>
+        </li>
+
+        <li>
+          <a th:href="@{/actuators}" th:classappend="${active}=='actuators' ? 'active' : ''"
+             style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;border:1px solid var(--bd);text-decoration:none;color:var(--ink)">
+            <span>🛠️</span><span>Actuators</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+</th:block>
+</body>
 </html>

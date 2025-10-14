@@ -15,17 +15,13 @@
   <main class="card-wrap">
     <section class="auth-card">
       <div class="brand">
-        <div class="logo">
-          <i class="fa-solid fa-seedling"></i>
-        </div>
+        <div class="logo"><i class="fa-solid fa-seedling"></i></div>
         <h1>Create your account</h1>
         <p class="subtitle">Join the cooperative platform in minutes.</p>
       </div>
 
-      <!-- global errors -->
       <div class="alert danger" th:if="${#fields.hasGlobalErrors()}"
-           th:each="e : ${#fields.globalErrors()}" th:text="${e}">
-      </div>
+           th:each="e : ${#fields.globalErrors()}" th:text="${e}"></div>
 
       <form class="auth-form" th:action="@{/auth/register}" th:object="${form}" method="post" novalidate>
         <div class="grid-2">
@@ -43,7 +39,7 @@
               <i class="fa-solid fa-user"></i>
               <input th:field="*{username}" placeholder="jane.doe" required/>
             </div>
-            <small class="error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></small>
+            <small class="error" th:if="${#fields.hasErrors('username')}" th:text="${#fields.errors('username')[0]}"></small>
           </div>
         </div>
 
@@ -54,13 +50,13 @@
               <i class="fa-solid fa-envelope"></i>
               <input th:field="*{email}" type="email" placeholder="jane@coop.local" required/>
             </div>
-            <small class="error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></small>
+            <small class="error" th:if="${#fields.hasErrors('email')}" th:text="${#fields.errors('email')[0]}"></small>
           </div>
 
           <div class="field">
             <label>Admin?</label>
             <label class="switch">
-              <input th:field="*{isAdmin}" type="checkbox"/>
+              <input th:field="*{admin}" type="checkbox"/>
               <span class="slider"></span>
             </label>
           </div>
@@ -73,7 +69,7 @@
               <i class="fa-solid fa-lock"></i>
               <input th:field="*{password}" type="password" placeholder="at least 8 characters" required/>
             </div>
-            <small class="error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></small>
+            <small class="error" th:if="${#fields.hasErrors('password')}" th:text="${#fields.errors('password')[0]}"></small>
           </div>
 
           <div class="field">
@@ -82,7 +78,7 @@
               <i class="fa-solid fa-lock-keyhole"></i>
               <input th:field="*{confirmPassword}" type="password" placeholder="repeat your password" required/>
             </div>
-            <small class="error" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></small>
+            <small class="error" th:if="${#fields.hasErrors('confirmPassword')}" th:text="${#fields.errors('confirmPassword')[0]}"></small>
           </div>
         </div>
 
@@ -99,18 +95,6 @@
         </p>
       </form>
     </section>
-
-    <aside class="hero">
-      <div class="hero-content">
-        <h2>Grow your <span class="accent">co-op</span> with style</h2>
-        <p>Beautiful UI, serious security, and a dashboard that works as hard as you do.</p>
-        <ul class="ticks">
-          <li><i class="fa-solid fa-check"></i> BCrypt password hashing</li>
-          <li><i class="fa-solid fa-check"></i> CSRF protection</li>
-          <li><i class="fa-solid fa-check"></i> Clean, responsive design</li>
-        </ul>
-      </div>
-    </aside>
   </main>
 </body>
 </html>
