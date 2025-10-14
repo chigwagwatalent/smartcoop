@@ -1,0 +1,119 @@
+<!-- src/main/resources/templates/admin/profile.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>My Profile • Chicken System</title>
+  <link th:href="@{/css/theme.css}" rel="stylesheet"/>
+  <style>
+    body{ background:var(--bg); font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink) }
+    .page{ width:min(96vw,1600px); margin:0 auto; padding:18px 0 }
+    .layout{ display:grid; grid-template-columns: 280px 1fr; gap:18px }
+    @media (max-width:1100px){ .layout{ grid-template-columns:1fr } }
+    .card{ background:var(--card); border:1px solid var(--bd); border-radius:16px; box-shadow:0 16px 36px rgba(2,141,24,.08); padding:16px }
+    .header-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px }
+    .muted{ color:var(--muted) }
+    .field{ margin:10px 0 }
+    .field label{ display:block; font-weight:700; margin-bottom:6px }
+    .input{ display:flex; align-items:center; border:1.5px solid var(--bd); border-radius:12px; background:#fff; padding:10px 12px }
+    .input input{ border:0; outline:0; width:100%; font-size:1rem; background:transparent; color:var(--ink) }
+    .btn{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:12px; border:1px solid var(--bd); background:#fff; font-weight:800; cursor:pointer }
+    .btn:hover{ background:#f2faf3 }
+    .btn-primary{ background:linear-gradient(135deg,var(--brand),var(--brand-2)); color:#fff; border:0; box-shadow:0 12px 24px rgba(2,141,24,.22) }
+    .alert{ padding:12px; border-radius:12px; margin-bottom:12px; font-weight:700 }
+    .alert-ok{ background:#ecfdf5; border:1px solid #a7f3d0; color:#065f46 }
+    .alert-err{ background:#fef2f2; border:1px solid #fecaca; color:#991b1b }
+  </style>
+</head>
+<body>
+  <div th:replace="~{common/navbar :: navbar}"></div>
+
+  <div class="page">
+    <div class="layout">
+      <div th:replace="~{common/sidebar :: sidebar('profile')}"></div>
+
+      <main style="align-self:start; display:grid; gap:18px">
+        <div class="card">
+          <div class="header-row">
+            <div>
+              <h2 style="margin:0">My Profile</h2>
+              <div class="muted tiny" th:text="${userEntity.username}">username</div>
+            </div>
+          </div>
+
+          <div th:if="${success}" class="alert alert-ok" th:text="${success}">Saved.</div>
+          <div th:if="${error}" class="alert alert-err" th:text="${error}">Error.</div>
+
+          <!-- Profile form -->
+          <form th:action="@{/profile}" method="post" th:object="${profileForm}">
+            <div class="field">
+              <label for="fullName">Full Name</label>
+              <div class="input">
+                <input id="fullName" th:field="*{fullName}" placeholder="Your name"/>
+              </div>
+              <div class="muted tiny" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+            </div>
+
+            <div class="field">
+              <label for="username">Username</label>
+              <div class="input">
+                <input id="username" th:field="*{username}" required placeholder="username"/>
+              </div>
+              <div class="muted tiny" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
+            </div>
+
+            <div class="field">
+              <label for="email">Email</label>
+              <div class="input">
+                <input id="email" th:field="*{email}" type="email" required placeholder="you@example.com"/>
+              </div>
+              <div class="muted tiny" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+            </div>
+
+            <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:14px">
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="header-row">
+            <div>
+              <h3 style="margin:0">Change Password</h3>
+              <div class="muted tiny">Use a strong, unique password</div>
+            </div>
+          </div>
+
+          <!-- Password form -->
+          <form th:action="@{/profile/password}" method="post" th:object="${passwordForm}">
+            <div class="field">
+              <label for="cur">Current Password</label>
+              <div class="input"><input id="cur" th:field="*{currentPassword}" type="password" required/></div>
+              <div class="muted tiny" th:if="${#fields.hasErrors('currentPassword')}" th:errors="*{currentPassword}"></div>
+            </div>
+
+            <div class="field">
+              <label for="newp">New Password</label>
+              <div class="input"><input id="newp" th:field="*{newPassword}" type="password" minlength="8" required/></div>
+              <div class="muted tiny" th:if="${#fields.hasErrors('newPassword')}" th:errors="*{newPassword}"></div>
+            </div>
+
+            <div class="field">
+              <label for="cnewp">Confirm New Password</label>
+              <div class="input"><input id="cnewp" th:field="*{confirmNewPassword}" type="password" minlength="8" required/></div>
+              <div class="muted tiny" th:if="${#fields.hasErrors('confirmNewPassword')}" th:errors="*{confirmNewPassword}"></div>
+            </div>
+
+            <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:14px">
+              <button type="submit" class="btn btn-primary">Change Password</button>
+            </div>
+          </form>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div th:replace="~{common/footer :: footer}"></div>
+</body>
+</html>

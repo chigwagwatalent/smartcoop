@@ -35,8 +35,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         var cfg = new CorsConfiguration();
-        cfg.setAllowedOriginPatterns(List.of("*"));   // allow any origin, incl. with credentials
-        cfg.setAllowedMethods(List.of("*"));          // GET, POST, PUT, PATCH, DELETE, OPTIONS, ...
+        cfg.setAllowedOriginPatterns(List.of("*"));   // any origin
+        cfg.setAllowedMethods(List.of("*"));          // all methods
         cfg.setAllowedHeaders(List.of("*"));          // any header
         cfg.setExposedHeaders(List.of("Content-Disposition", "Authorization"));
         cfg.setAllowCredentials(true);
@@ -54,15 +54,20 @@ public class SecurityConfig {
             .authenticationProvider(authProvider)
             .cors(Customizer.withDefaults())
             .csrf(csrf -> csrf
+                // allow cross-origin POST/PUT/DELETE to API without CSRF token
                 .ignoringRequestMatchers("/v1/api/**", "/api/**")
             )
             .authorizeHttpRequests(auth -> auth
+                // public endpoints (put these BEFORE anyRequest)
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()   // preflight
                 .requestMatchers(
-                    "/auth/**",
+                    "/v1/api/**",        // your IoT + other APIs
+                    "/api/**",           // any other APIs you created
+                    "/auth/**",          // login/logout pages
                     "/css/**", "/js/**", "/images/**", "/webjars/**",
                     "/error"
                 ).permitAll()
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                // everything else (Thymeleaf pages) requires login
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Coop Camera • Chicken System</title>
+  <link th:href="@{/css/theme.css}" rel="stylesheet"/>
+  <style>
+    :root{
+      --brand:#028d18; --brand-2:#4cc36a;
+      --ink:#0b1f11; --bd:#e6eee7; --bg:#f6faf7; --card:#ffffff; --muted:#68806b;
+    }
+    body{ background:var(--bg); font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink) }
+    .page{ width:min(96vw,1600px); margin:0 auto; padding:18px 0 }
+    .layout{ display:grid; grid-template-columns: 280px 1fr; gap:18px }
+    @media (max-width:1100px){ .layout{ grid-template-columns:1fr } }
+
+    .card{ background:var(--card); border:1px solid var(--bd); border-radius:16px; box-shadow:0 16px 36px rgba(2,141,24,.08); padding:16px }
+    .header-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px }
+    .muted{ color:var(--muted) }
+
+    .btn{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:12px; border:1px solid var(--bd); background:#fff; font-weight:800; cursor:pointer }
+    .btn:hover{ background:#f2faf3 }
+    .btn-primary{ background:linear-gradient(135deg,var(--brand),var(--brand-2)); color:#fff; border:0; box-shadow:0 12px 24px rgba(2,141,24,.22) }
+
+    .viewport{
+      position:relative;
+      border:1px solid var(--bd);
+      border-radius:16px;
+      overflow:hidden;
+      background:#000;
+      aspect-ratio: 16/9;           /* keeps a pleasant frame even before the stream appears */
+      max-height: 72vh;
+    }
+    .viewport img, .viewport video{
+      width:100%; height:100%; object-fit:contain; display:block; background:#000;
+    }
+    .overlay{
+      position:absolute; inset:auto 12px 12px auto; display:flex; gap:8px;
+    }
+    .small{ font-size:.9rem }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; border:1px solid var(--bd); background:#fff; font-weight:700
+    }
+    @media print{
+      .nav-wrap, aside, .header-row, .overlay, footer{ display:none !important }
+      body{ background:#fff }
+      .page{ width:100%; margin:0; padding:0 }
+      .card{ border:1px solid #ddd; box-shadow:none }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <div th:replace="~{common/navbar :: navbar}"></div>
+
+  <div class="page">
+    <div class="layout">
+      <!-- Sidebar (no specific active key; you can change to sidebar('camera') if you add that link) -->
+      <div th:replace="~{common/sidebar :: sidebar('dashboard')}"></div>
+
+      <!-- Content -->
+      <main style="align-self:start">
+        <div class="card">
+          <div class="header-row">
+            <div>
+              <h2 style="margin:0">Coop Camera</h2>
+              <div class="muted small">Live feed from your coop camera</div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap">
+              <button type="button" id="startBtn" class="btn btn-primary">▶ Start</button>
+              <button type="button" id="stopBtn" class="btn">⏹ Stop</button>
+              <button type="button" class="btn" onclick="toggleFullscreen()">⤢ Fullscreen</button>
+              <button type="button" class="btn" onclick="window.print()">🖨 Print</button>
+            </div>
+          </div>
+
+          <div class="viewport" id="viewport">
+            <!-- Using <img> works great for MJPEG streams (continuous multipart/x-mixed-replace). -->
+            <img id="camImg" alt="Coop camera stream" style="display:none" />
+            <!-- Optional <video> element left here if your camera actually provides an MP4/HLS—most IP cams won’t via raw HTTP. -->
+            <video id="camVideo" playsinline autoplay muted controls style="display:none"></video>
+
+            <div class="overlay">
+              <span class="pill" id="statusPill">Status: Stopped</span>
+            </div>
+          </div>
+
+          <div style="margin-top:10px" class="muted small">
+            If you don’t see video: ensure the camera is reachable at
+            <code th:text="${cameraUrl}">http://192.168.0.1:567</code>
+            and it serves an MJPEG or browser-playable stream. For RTSP feeds, use a gateway (e.g. ffmpeg/rtsp-simple-server) to convert to HLS/MJPEG.
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div th:replace="~{common/footer :: footer}"></div>
+
+  <script th:inline="none">
+    const cameraBase = /*[[${cameraUrl}]]*/ 'http://192.168.0.1:567';
+
+    // If your camera needs a specific path (e.g. /mjpeg, /video), put it here:
+    const cameraStreamUrl = cameraBase; // e.g. `${cameraBase}/mjpeg`
+
+    const imgEl   = document.getElementById('camImg');
+    const vidEl   = document.getElementById('camVideo');
+    const statusP = document.getElementById('statusPill');
+    const startBtn= document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+
+    // We default to MJPEG via <img>. If you truly have MP4/HLS, swap to video logic below.
+    let usingImage = true;
+    let started = false;
+
+    function setStatus(txt){ statusP.textContent = 'Status: ' + txt; }
+
+    function startStream(){
+      if (started) return;
+      started = true;
+      setStatus('Connecting…');
+      // Bust caches by appending a moving query. Many MJPEG cameras ignore, but it helps snapshots.
+      const bust = 't=' + Date.now();
+      if (usingImage) {
+        vidEl.pause(); vidEl.src = ''; vidEl.style.display = 'none';
+        imgEl.src = cameraStreamUrl + (cameraStreamUrl.includes('?') ? '&' : '?') + bust;
+        imgEl.style.display = 'block';
+      } else {
+        imgEl.style.display = 'none'; imgEl.src = '';
+        vidEl.style.display = 'block';
+        if (vidEl.src !== cameraStreamUrl) vidEl.src = cameraStreamUrl;
+        vidEl.play().catch(()=>{/* ignore */});
+      }
+      setStatus('Live');
+    }
+
+    function stopStream(){
+      if (!started) return;
+      started = false;
+      if (usingImage) {
+        imgEl.src = '';
+        imgEl.style.display = 'none';
+      } else {
+        vidEl.pause(); vidEl.removeAttribute('src'); vidEl.load();
+        vidEl.style.display = 'none';
+      }
+      setStatus('Stopped');
+    }
+
+    function toggleFullscreen(){
+      const el = document.getElementById('viewport');
+      if (!document.fullscreenElement) {
+        el.requestFullscreen?.();
+      } else {
+        document.exitFullscreen?.();
+      }
+    }
+
+    startBtn.addEventListener('click', startStream);
+    stopBtn.addEventListener('click',  stopStream);
+
+    // Auto-start on load
+    document.addEventListener('DOMContentLoaded', startStream);
+
+    // If the image fails (404/connection), show stopped state
+    imgEl.addEventListener('error', () => setStatus('Error (check camera URL)'));
+
+    // Optional: keep-alive ticker for cams that drop after inactivity
+    setInterval(() => {
+      if (started && usingImage) {
+        // poke by resetting src with a new cache-buster every 60s
+        imgEl.src = cameraStreamUrl + (cameraStreamUrl.includes('?') ? '&' : '?') + ('t=' + Date.now());
+      }
+    }, 60000);
+  </script>
+</body>
+</html>

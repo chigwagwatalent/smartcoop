@@ -37,7 +37,6 @@ public class IotDataRestController {
         return ResponseEntity.status(201).body(service.create(request));
     }
     
-    /** Paged readings (newest first) */
     @GetMapping("/readings")
     public ResponseEntity<Map<String, Object>> page(
             @RequestParam(defaultValue = "0") int page,
@@ -52,8 +51,7 @@ public class IotDataRestController {
         payload.put("totalElements", p.getTotalElements());
         return ResponseEntity.ok(payload);
     }
-
-    /** Real-time stream of new readings */
+    
     @GetMapping(path = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter stream() throws Exception {
         String first = mapper.writeValueAsString(viewService.latestSummary());

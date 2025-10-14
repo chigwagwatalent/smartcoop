@@ -26,9 +26,6 @@ public class UserServices implements UserDetailsService {
         this.encoder = encoder;
     }
 
-    // -------------------------
-    // ORIGINAL METHOD: keep as-is
-    // -------------------------
     @Transactional
     public User registerUser(User u, String rawPassword) {
         if (userRepository.existsByUsername(u.getUsername())) {
@@ -43,9 +40,6 @@ public class UserServices implements UserDetailsService {
         return userRepository.save(u);
     }
 
-    // -------------------------
-    // ORIGINAL METHOD: keep as-is
-    // -------------------------
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -62,23 +56,16 @@ public class UserServices implements UserDetailsService {
         );
     }
 
-    // =================================================================
-    // ADDITIONS for MVC CRUD (used by the Thymeleaf controller/pages)
-    // =================================================================
-
-    /** Page through users (e.g., for /users listing). */
     @Transactional(readOnly = true)
     public Page<User> page(Pageable pageable) {
         return userRepository.findAll(pageable);
     }
 
-    /** Find one by id (for edit form). */
     @Transactional(readOnly = true)
     public Optional<User> findById(Long id) {
         return userRepository.findById(id);
     }
 
-    /** Create a user (password required). Equivalent to registerUser but without forcing enabled/locked. */
     @Transactional
     public User create(User u, String rawPassword) {
         if (userRepository.existsByUsername(u.getUsername())) {
@@ -94,14 +81,9 @@ public class UserServices implements UserDetailsService {
         return userRepository.save(u);
     }
 
-    /**
-     * Update a user. If rawPassword is non-null and not blank, password will be changed.
-     * Also enforces username/email uniqueness (excluding the current user).
-     */
     @Transactional
     public Optional<User> update(Long id, User incoming, String rawPasswordOpt) {
         return userRepository.findById(id).map(db -> {
-            // uniqueness checks excluding current id
             if (userRepository.existsByUsernameAndIdNot(incoming.getUsername(), id)) {
                 throw new IllegalArgumentException("Username already taken");
             }
@@ -124,11 +106,41 @@ public class UserServices implements UserDetailsService {
         });
     }
 
-    /** Delete a user by id. Returns true if deleted, false if not found. */
     @Transactional
     public boolean delete(Long id) {
         if (!userRepository.existsById(id)) return false;
         userRepository.deleteById(id);
         return true;
+    }
+
+    @Transactional(readOnly = true)
+    public User mustGetByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+    }
+
+    @Transactional
+    public User updateProfile(User current, String fullName, String username, String email) {
+        if (!current.getUsername().equalsIgnoreCase(username)
+                && userRepository.existsByUsername(username)) {
+            throw new IllegalArgumentException("Username already taken");
+        }
+        if (!current.getEmail().equalsIgnoreCase(email)
+                && userRepository.existsByEmail(email)) {
+            throw new IllegalArgumentException("Email already in use");
+        }
+        current.setFullName(fullName);
+        current.setUsername(username);
+        current.setEmail(email);
+        return userRepository.save(current);
+    }
+
+    @Transactional
+    public void changePassword(User current, String currentPassword, String newPassword) {
+        if (!encoder.matches(currentPassword, current.getPasswordHash())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+        current.setPasswordHash(encoder.encode(newPassword));
+        userRepository.save(current);
     }
 }
