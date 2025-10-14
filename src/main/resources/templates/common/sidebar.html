@@ -57,6 +57,19 @@
         </ul>
       </div>
 
+      <!-- SECTION: Assistant -->
+      <div>
+        <div style="font-weight:800;color:var(--muted);letter-spacing:.03em;margin:6px 0 10px">Assistant</div>
+        <ul style="list-style:none;padding:0;margin:0;display:grid;gap:8px">
+          <li>
+            <a th:href="@{/ai-chat}" th:classappend="${active}=='ai-chat' ? ' active' : ''"
+               style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;border:1px solid var(--bd);text-decoration:none;color:var(--ink)">
+              <span>🤖</span><span>AI Chat</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
       <!-- SECTION: Administration -->
       <div>
         <div style="font-weight:800;color:var(--muted);letter-spacing:.03em;margin:6px 0 10px">Administration</div>
@@ -73,7 +86,7 @@
     </nav>
   </aside>
 
-  <!-- small helper style so “active” looks crisp without touching your global CSS -->
+  <!-- Active state helper -->
   <style>
     aside a.active{
       border-color: var(--brand,#028d18);

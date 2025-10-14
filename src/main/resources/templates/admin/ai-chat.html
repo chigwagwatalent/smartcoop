@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>AI Chat • Chicken System</title>
+  <link th:href="@{/css/theme.css}" rel="stylesheet"/>
+
+  <!-- CSRF (Spring Security) -->
+  <meta name="_csrf" th:content="${_csrf.token}"/>
+  <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+  <style>
+    :root{
+      --radius:14px;
+      --shadow: 0 10px 30px rgba(0,0,0,.10);
+      --brandA: var(--brand, #028d18);
+      --brandB: var(--brand-2, #7ecb20);
+    }
+
+    body{ background:var(--bg); font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink) }
+    .page{ width:min(96vw,1600px); margin:0 auto; padding:18px 0 }
+    .layout{ display:grid; grid-template-columns: 280px 1fr; gap:18px }
+    @media (max-width:1100px){ .layout{ grid-template-columns:1fr } }
+
+    /* Shell */
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.85));
+      backdrop-filter: blur(6px);
+      border:1px solid var(--bd);
+      border-radius:18px;
+      box-shadow: var(--shadow);
+      padding:16px;
+    }
+    .header-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px }
+    .muted{ color:var(--muted) }
+
+    /* Buttons */
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      padding:10px 14px; border-radius:12px; border:1px solid var(--bd); background:#fff;
+      font-weight:800; cursor:pointer; flex:0 0 auto; width:auto;
+      transition:transform .04s ease, background .15s ease, box-shadow .15s ease;
+    }
+    .btn:hover{ background:#f7fbf8 }
+    .btn:active{ transform: translateY(1px) }
+    .btn[disabled]{ opacity:.6; cursor:not-allowed }
+    .btn-primary{
+      background:linear-gradient(140deg, var(--brandA), var(--brandB));
+      color:#fff; border:0; box-shadow:0 10px 26px rgba(2,141,24,.24);
+    }
+
+    /* Center column for chat */
+    .chat-container{
+      margin: 6px auto 0;
+      width:min(900px, 100%);
+      display:grid; grid-template-rows: auto 1fr auto; gap:14px;
+      height:calc(86vh);
+    }
+
+    /* Chat area */
+    .messages{
+      overflow:auto; padding:16px; border:1px solid var(--bd);
+      border-radius:var(--radius); background:#fff; box-shadow: var(--shadow);
+    }
+    .msg{
+      display:grid; grid-template-columns: 44px 1fr;
+      gap:12px; margin:14px 0;
+      max-width: 100%;
+    }
+    .avatar{
+      width:44px; height:44px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:20px; user-select:none;
+    }
+    .avatar.user{ background:#e6f4ea; border:1px solid #cfead7 }
+    .avatar.ai{ background:#eef8f0; border:1px solid #d7f0da }
+
+    .bubble{
+      border:1px solid var(--bd);
+      border-radius:18px;
+      padding:12px 14px;
+      background:#fff;
+      box-shadow: 0 6px 14px rgba(0,0,0,.04);
+      white-space:pre-wrap; word-wrap:break-word;
+    }
+    .user .bubble{ background:#f7fbf8 }
+    .ai .bubble{ background:linear-gradient(0deg, rgba(76,195,106,.06), rgba(76,195,106,.06)), #fff }
+
+    /* Composer dock */
+    .composer-dock{
+      position: sticky; bottom: 8px; /* stays visible near bottom */
+      z-index: 1;
+    }
+    .composer{
+      display:flex; gap:10px; align-items:flex-end;
+      padding:10px; border:1px solid var(--bd); border-radius:var(--radius);
+      background:#fff; box-shadow: var(--shadow);
+    }
+    .composer .input{
+      flex:1 1 auto; min-width:0;
+      display:flex; align-items:center; padding:6px 10px;
+      border:1.5px solid var(--bd); border-radius:999px;
+      background:#fff;
+    }
+    .composer textarea{
+      border:0; outline:0; width:100%; background:transparent; color:var(--ink);
+      resize:none; min-height:42px; max-height:200px; font-size:1rem; line-height:1.4;
+      padding:10px 6px;
+    }
+    .composer .btn-primary{
+      height:44px; padding:0 18px; border-radius:999px;
+      min-width:96px; /* keeps the button compact */
+    }
+
+    /* Top actions */
+    .toolbar{
+      display:flex; gap:8px; align-items:center; justify-content:flex-end;
+    }
+
+    /* Typing indicator */
+    .dots{ display:inline-block; min-width:1.5em }
+    .dots span{ animation:blink 1.2s infinite }
+    .dots span:nth-child(2){ animation-delay:.15s }
+    .dots span:nth-child(3){ animation-delay:.3s }
+    @keyframes blink{ 0%{opacity:.2} 20%{opacity:1} 100%{opacity:.2} }
+
+    /* Small helpers */
+    .sr{ position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden }
+    @media print{ .nav-wrap, aside, .composer-dock, .toolbar, footer { display:none !important } .messages{ height:auto } }
+  </style>
+</head>
+<body>
+  <div th:replace="~{common/navbar :: navbar}"></div>
+
+  <div class="page">
+    <div class="layout">
+      <div th:replace="~{common/sidebar :: sidebar('assistant')}"></div>
+
+      <main style="align-self:start">
+        <div class="card">
+          <div class="header-row">
+            <div>
+              <h2 style="margin:0">Chicken AI Chat</h2>
+              <div class="muted tiny">Ask about feed, disease prevention, coop climate, or general chicken care.</div>
+            </div>
+            <div class="toolbar">
+              <button type="button" class="btn" id="clearBtn">🧹 Clear</button>
+              <button type="button" class="btn" id="copyBtn">📄 Copy</button>
+            </div>
+          </div>
+
+          <section class="chat-container">
+            <!-- Messages -->
+            <div id="messages" class="messages" aria-live="polite"></div>
+
+            <!-- Composer -->
+            <div class="composer-dock">
+              <div class="composer" role="form" aria-label="AI chat composer">
+                <label for="prompt" class="sr">Message</label>
+                <div class="input">
+                  <textarea id="prompt" placeholder="Ask something about your chickens…  (Shift+Enter for newline)"></textarea>
+                </div>
+                <button class="btn btn-primary" id="sendBtn" type="button" aria-label="Send">Send</button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div th:replace="~{common/footer :: footer}"></div>
+
+  <script th:inline="none">
+    // ---- CSRF ----
+    const CSRF_TOKEN  = document.querySelector('meta[name="_csrf"]')?.content || '';
+    const CSRF_HEADER = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+
+    // ---- Elements ----
+    const elMessages = document.getElementById('messages');
+    const elPrompt   = document.getElementById('prompt');
+    const elSend     = document.getElementById('sendBtn');
+    const elClear    = document.getElementById('clearBtn');
+    const elCopy     = document.getElementById('copyBtn');
+
+    // ---- History ----
+    const STORAGE_KEY = 'ai-chat-history';
+    const messages = loadHistory() || [];
+    if (messages.length === 0) {
+      messages.push({role:'model', text:'Hi! I’m Gemini ✨. Ask me anything about raising chickens 🐥.'});
+    }
+
+    function saveHistory(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(messages)); }catch(_){} }
+    function loadHistory(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); }catch(_){ return []; } }
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, (m)=>( {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m] ));
+    }
+
+    function bubbleEl(m){
+      const wrap = document.createElement('div');
+      wrap.className = 'msg ' + (m.role === 'user' ? 'user' : 'ai');
+
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar ' + (m.role === 'user' ? 'user' : 'ai');
+      avatar.textContent = (m.role === 'user') ? '🐔' : '✨';
+
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.innerHTML = escapeHtml(m.text ?? '').replace(/\n/g,'<br/>');
+
+      wrap.appendChild(avatar);
+      wrap.appendChild(bubble);
+      return wrap;
+    }
+
+    function render(){
+      elMessages.innerHTML = '';
+      messages.forEach(m => elMessages.appendChild(bubbleEl(m)));
+      elMessages.scrollTop = elMessages.scrollHeight;
+      saveHistory();
+    }
+
+    function setThinking(on){
+      const id = 'thinking';
+      if(on){
+        const wrap = document.createElement('div');
+        wrap.className = 'msg ai';
+        wrap.id = id;
+
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar ai';
+        avatar.textContent = '✨';
+
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.innerHTML = `<span class="dots"><span>•</span><span>•</span><span>•</span></span> thinking…`;
+
+        wrap.appendChild(avatar); wrap.appendChild(bubble);
+        elMessages.appendChild(wrap);
+        elMessages.scrollTop = elMessages.scrollHeight;
+      }else{
+        document.getElementById(id)?.remove();
+      }
+    }
+
+    // Auto-resize textarea
+    function autoresize(){
+      elPrompt.style.height = 'auto';
+      elPrompt.style.height = Math.min(elPrompt.scrollHeight, 200) + 'px';
+    }
+    elPrompt.addEventListener('input', autoresize);
+
+    async function send(){
+      const txt = elPrompt.value.trim();
+      if(!txt) return;
+
+      messages.push({role:'user', text: txt});
+      elPrompt.value = '';
+      autoresize();
+      render();
+
+      // Keep last N turns to keep prompt short
+      const MAX_TURNS = 10;
+      const sliced = messages.slice(-1 - MAX_TURNS*2);
+      const payload = { messages: sliced.map(m => ({ role: m.role, content: m.text })) };
+
+      elSend.disabled = true;
+      setThinking(true);
+
+      try{
+        const res = await fetch('/ai-chat/ask', {
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json',
+            'Accept':'application/json',
+            [CSRF_HEADER]: CSRF_TOKEN
+          },
+          body: JSON.stringify(payload)
+        });
+        if(!res.ok) throw new Error(await res.text().catch(()=>res.statusText));
+        const data = await res.json();
+        messages.push({role:'model', text: (data && data.reply) ? String(data.reply) : '(no response)'});
+      }catch(e){
+        messages.push({role:'model', text:'(Error contacting AI: ' + (e.message||e) + ')'});
+      }finally{
+        setThinking(false);
+        elSend.disabled = false;
+        render();
+        elPrompt.focus();
+      }
+    }
+
+    // Controls
+    elSend.addEventListener('click', send);
+    elPrompt.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter' && !e.shiftKey){
+        e.preventDefault();
+        send();
+      }
+    });
+    elClear.addEventListener('click', ()=>{
+      messages.length = 0;
+      messages.push({role:'model', text:'Chat cleared. How can I help about your chickens?'});
+      render();
+      elPrompt.focus();
+    });
+    elCopy.addEventListener('click', async ()=>{
+      const plain = messages.map(m => (m.role === 'user' ? 'You' : 'Gemini') + ': ' + (m.text||'')).join('\n\n');
+      try{
+        await navigator.clipboard.writeText(plain);
+        elCopy.textContent = '✅ Copied';
+        setTimeout(()=> elCopy.textContent = '📄 Copy', 1200);
+      }catch(_){
+        elCopy.textContent = '⚠️ Copy failed';
+        setTimeout(()=> elCopy.textContent = '📄 Copy', 1200);
+      }
+    });
+
+    // Initial paint
+    render();
+    autoresize();
+    elPrompt.focus();
+  </script>
+</body>
+</html>
