@@ -5,23 +5,27 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 public class GeminiChatService {
 
     private final RestClient http;
     private final String apiKey;
-    private final String base;
-    private final String version;
-    private final String model;
+    private final String base;     // e.g. https://generativelanguage.googleapis.com
+    private final String version;  // v1
+    private final String preferredModel; // from properties
 
     private final double temperature;
     private final Integer topK;
     private final Double topP;
+
+    // cache discovered usable models (names that support generateContent)
+    private final AtomicReference<List<String>> usableModels = new AtomicReference<>();
 
     public GeminiChatService(
             @Value("${gemini.api.key}") String apiKey,
@@ -32,10 +36,10 @@ public class GeminiChatService {
             @Value("${gemini.topK:32}") Integer topK,
             @Value("${gemini.topP:0.95}") Double topP
     ) {
-        this.apiKey = apiKey;
+        this.apiKey = Objects.requireNonNull(apiKey, "gemini.api.key");
         this.base = trimEnd(base);
         this.version = trimSlashes(version);
-        this.model = model;
+        this.preferredModel = model;
         this.temperature = temperature;
         this.topK = topK;
         this.topP = topP;
@@ -49,14 +53,70 @@ public class GeminiChatService {
     /** Public ask that accepts a single prompt string. */
     public String ask(String prompt) {
         if (prompt == null) prompt = "";
-        GenerateRequest req = GenerateRequest.singleUserText(prompt, temperature, topK, topP);
-        GenerateResponse res = send(req);
-        String text = res != null ? res.firstTextOrNull() : null;
-        return (text == null || text.isBlank()) ? "(no response)" : text.trim();
+
+        // ensure we have a discovered list
+        List<String> candidates = ensureUsableModels();
+
+        if (candidates.isEmpty()) {
+            return "(No Gemini models with generateContent are available for this API key/project on "
+                    + version + ". Enable Generative Language API for your key, then retry.)";
+        }
+
+        // try preferred first if present, otherwise iterate
+        List<String> tryOrder = new ArrayList<>();
+        if (preferredModel != null && !preferredModel.isBlank()) {
+            tryOrder.add(preferredModel);
+        }
+        for (String m : candidates) if (!tryOrder.contains(m)) tryOrder.add(m);
+
+        for (String modelName : tryOrder) {
+            try {
+                GenerateRequest req = GenerateRequest.singleUserText(prompt, temperature, topK, topP);
+                GenerateResponse res = send(req, modelName);
+                String text = (res == null) ? null : res.firstTextOrNull();
+                if (text != null && !text.isBlank()) return text.trim();
+            } catch (HttpClientErrorException.NotFound nf) {
+                // model vanished → continue
+            } catch (HttpClientErrorException e) {
+                // surface concise error
+                return "(Gemini error " + e.getStatusCode().value() + " on model " + modelName + "): "
+                        + safeBody(e.getResponseBodyAsString());
+            }
+        }
+        return "(All candidate models returned empty or errors. Check API enablement/quota and try again.)";
     }
 
-    /** POST to /v{version}/models/{model}:generateContent?key=... */
-    private GenerateResponse send(GenerateRequest body) {
+    /** GET {base}/{version}/models?key=... and keep those that support generateContent. */
+    private List<String> ensureUsableModels() {
+        List<String> current = usableModels.get();
+        if (current != null) return current;
+        try {
+            String path = String.format("/%s/models?key=%s", version, apiKey);
+            ModelList list = http.get().uri(path).retrieve().body(ModelList.class);
+            List<String> names = new ArrayList<>();
+            if (list != null && list.models != null) {
+                for (ModelInfo m : list.models) {
+                    if (m.supportedGenerationMethods != null &&
+                        m.supportedGenerationMethods.contains("generateContent")) {
+                        names.add(m.name.replace("models/",""));
+                    }
+                }
+            }
+            // sort to prefer flash/pro 1.5 first
+            names.sort(Comparator.comparing((String n) ->
+                    n.contains("1.5-flash") ? 0 : n.contains("1.5-pro") ? 1 : 2)
+                    .thenComparing(Comparator.naturalOrder()));
+            usableModels.compareAndSet(null, names);
+            return names;
+        } catch (HttpClientErrorException e) {
+            // If list call fails, keep empty to show helpful message in ask()
+            usableModels.compareAndSet(null, List.of());
+            return List.of();
+        }
+    }
+
+    /** POST {base}/{version}/models/{model}:generateContent?key=... */
+    private GenerateResponse send(GenerateRequest body, String model) {
         String path = String.format("/%s/models/%s:generateContent?key=%s", version, model, apiKey);
         return http.post()
                 .uri(path)
@@ -65,6 +125,12 @@ public class GeminiChatService {
                 .body(body)
                 .retrieve()
                 .body(GenerateResponse.class);
+    }
+
+    private static String safeBody(String s){
+        if (s == null || s.isBlank()) return "(no body)";
+        // short & clean for UI
+        return s.length() > 500 ? s.substring(0, 500) + "..." : s;
     }
 
     private static String trimEnd(String s){
@@ -79,7 +145,7 @@ public class GeminiChatService {
         return t;
     }
 
-    /* ---------- Minimal DTOs for generateContent ---------- */
+    /* ---------- DTOs ---------- */
 
     record GenerateRequest(
             List<Content> contents,
@@ -103,13 +169,9 @@ public class GeminiChatService {
     static class GenerateResponse {
         public List<Candidate> candidates;
         @JsonIgnoreProperties(ignoreUnknown = true)
-        static class Candidate {
-            public ContentOut content;
-        }
+        static class Candidate { public ContentOut content; }
         @JsonIgnoreProperties(ignoreUnknown = true)
-        static class ContentOut {
-            public List<PartOut> parts;
-        }
+        static class ContentOut { public List<PartOut> parts; }
         @JsonIgnoreProperties(ignoreUnknown = true)
         static class PartOut { public String text; }
 
@@ -119,5 +181,15 @@ public class GeminiChatService {
             if (c == null || c.parts == null || c.parts.isEmpty()) return null;
             return c.parts.get(0).text;
         }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    static class ModelList {
+        public List<ModelInfo> models;
+    }
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    static class ModelInfo {
+        public String name; // e.g. models/gemini-1.5-flash
+        public List<String> supportedGenerationMethods; // e.g. ["generateContent"]
     }
 }
