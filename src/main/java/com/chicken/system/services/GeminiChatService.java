@@ -24,7 +24,7 @@ public class GeminiChatService {
     private final Integer topK;
     private final Double topP;
 
-    // cache discovered usable models (names that support generateContent)
+    // cache discovered usable models (names that support generateContent)  //TODO: 
     private final AtomicReference<List<String>> usableModels = new AtomicReference<>();
 
     public GeminiChatService(
@@ -50,11 +50,9 @@ public class GeminiChatService {
                 .build();
     }
 
-    /** Public ask that accepts a single prompt string. */
     public String ask(String prompt) {
         if (prompt == null) prompt = "";
 
-        // ensure we have a discovered list
         List<String> candidates = ensureUsableModels();
 
         if (candidates.isEmpty()) {
@@ -62,7 +60,6 @@ public class GeminiChatService {
                     + version + ". Enable Generative Language API for your key, then retry.)";
         }
 
-        // try preferred first if present, otherwise iterate
         List<String> tryOrder = new ArrayList<>();
         if (preferredModel != null && !preferredModel.isBlank()) {
             tryOrder.add(preferredModel);
@@ -76,9 +73,7 @@ public class GeminiChatService {
                 String text = (res == null) ? null : res.firstTextOrNull();
                 if (text != null && !text.isBlank()) return text.trim();
             } catch (HttpClientErrorException.NotFound nf) {
-                // model vanished → continue
             } catch (HttpClientErrorException e) {
-                // surface concise error
                 return "(Gemini error " + e.getStatusCode().value() + " on model " + modelName + "): "
                         + safeBody(e.getResponseBodyAsString());
             }
@@ -86,7 +81,6 @@ public class GeminiChatService {
         return "(All candidate models returned empty or errors. Check API enablement/quota and try again.)";
     }
 
-    /** GET {base}/{version}/models?key=... and keep those that support generateContent. */
     private List<String> ensureUsableModels() {
         List<String> current = usableModels.get();
         if (current != null) return current;
