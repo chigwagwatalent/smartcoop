@@ -1,0 +1,708 @@
+{
+	"info": {
+		"_postman_id": "fa082179-6c08-4837-a69b-947c27852a1f",
+		"name": "CAP",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "35963179",
+		"_collection_link": "https://eschoolar.postman.co/workspace/DATUM~6bab04f8-fc30-4e28-a3e0-a5d44a07881b/collection/35963179-fa082179-6c08-4837-a69b-947c27852a1f?action=share&source=collection_link&creator=35963179"
+	},
+	"item": [
+		{
+			"name": "GetLatestReadings",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:8080/v1/api/iot/reading/latest"
+			},
+			"response": [
+				{
+					"name": "New Request",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": "http://localhost:8080/v1/api/iot/reading/latest"
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "",
+					"header": [
+						{
+							"key": "Vary",
+							"value": "Origin"
+						},
+						{
+							"key": "Vary",
+							"value": "Access-Control-Request-Method"
+						},
+						{
+							"key": "Vary",
+							"value": "Access-Control-Request-Headers"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "X-XSS-Protection",
+							"value": "0"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-cache, no-store, max-age=0, must-revalidate"
+						},
+						{
+							"key": "Pragma",
+							"value": "no-cache"
+						},
+						{
+							"key": "Expires",
+							"value": "0"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Date",
+							"value": "Thu, 16 Oct 2025 17:33:36 GMT"
+						},
+						{
+							"key": "Keep-Alive",
+							"value": "timeout=60"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"id\": 16,\n    \"temperatureC\": 28.75,\n    \"humidityPct\": 46.3,\n    \"waterLevelPct\": 100,\n    \"createdAt\": \"2025-10-14T18:28:02.415639\"\n}"
+				}
+			]
+		},
+		{
+			"name": "RealtimeValues",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/v1/api/iot/reading?page=0&size=20",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"v1",
+						"api",
+						"iot",
+						"reading"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "0"
+						},
+						{
+							"key": "size",
+							"value": "20"
+						}
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "New Request",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/v1/api/iot/reading?page=0&size=20",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"v1",
+								"api",
+								"iot",
+								"reading"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "",
+					"header": [
+						{
+							"key": "Vary",
+							"value": "Origin"
+						},
+						{
+							"key": "Vary",
+							"value": "Access-Control-Request-Method"
+						},
+						{
+							"key": "Vary",
+							"value": "Access-Control-Request-Headers"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "X-XSS-Protection",
+							"value": "0"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-cache, no-store, max-age=0, must-revalidate"
+						},
+						{
+							"key": "Pragma",
+							"value": "no-cache"
+						},
+						{
+							"key": "Expires",
+							"value": "0"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Date",
+							"value": "Thu, 16 Oct 2025 17:33:16 GMT"
+						},
+						{
+							"key": "Keep-Alive",
+							"value": "timeout=60"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"content\": [\n        {\n            \"id\": 16,\n            \"temperatureC\": 28.75,\n            \"humidityPct\": 46.3,\n            \"waterLevelPct\": 100,\n            \"createdAt\": \"2025-10-14T18:28:02.415639\"\n        },\n        {\n            \"id\": 15,\n            \"temperatureC\": 28.75,\n            \"humidityPct\": 46.3,\n            \"waterLevelPct\": 100,\n            \"createdAt\": \"2025-10-14T18:28:01.186044\"\n        },\n        {\n            \"id\": 14,\n            \"temperatureC\": 28.75,\n            \"humidityPct\": 46.3,\n            \"waterLevelPct\": 100,\n            \"createdAt\": \"2025-10-14T18:27:59.835108\"\n        },\n        {\n            \"id\": 13,\n            \"temperatureC\": 28.75,\n            \"humidityPct\": 46.3,\n            \"waterLevelPct\": 100,\n            \"createdAt\": \"2025-10-14T18:27:58.114609\"\n        },\n        {\n            \"id\": 12,\n            \"temperatureC\": 28.75,\n            \"humidityPct\": 46.3,\n            \"waterLevelPct\": 100,\n            \"createdAt\": \"2025-10-14T18:27:56.681866\"\n        },\n        {\n            \"id\": 11,\n            \"temperatureC\": 28.75,\n            \"humidityPct\": 46.3,\n            \"waterLevelPct\": 100,\n            \"createdAt\": \"2025-10-14T18:27:55.589474\"\n        },\n        {\n            \"id\": 10,\n            \"temperatureC\": 28.75,\n            \"humidityPct\": 46.3,\n            \"waterLevelPct\": 17,\n            \"createdAt\": \"2025-10-14T18:27:48.111501\"\n        },\n        {\n            \"id\": 9,\n            \"temperatureC\": 24.75,\n            \"humidityPct\": 26.3,\n            \"waterLevelPct\": 17,\n            \"createdAt\": \"2025-10-14T18:27:30.598601\"\n        },\n        {\n            \"id\": 8,\n            \"temperatureC\": 24.75,\n            \"humidityPct\": 56.3,\n            \"waterLevelPct\": 17,\n            \"createdAt\": \"2025-10-14T18:27:25.54623\"\n        },\n        {\n            \"id\": 7,\n            \"temperatureC\": 24.75,\n            \"humidityPct\": 56.3,\n            \"waterLevelPct\": 7,\n            \"createdAt\": \"2025-10-14T18:27:21.390528\"\n        },\n        {\n            \"id\": 6,\n            \"temperatureC\": 24.75,\n            \"humidityPct\": 56.3,\n            \"waterLevelPct\": 72,\n            \"createdAt\": \"2025-10-14T18:27:16.106911\"\n        },\n        {\n            \"id\": 5,\n            \"temperatureC\": 24.75,\n            \"humidityPct\": 56.3,\n            \"waterLevelPct\": 72,\n            \"createdAt\": \"2025-10-14T18:27:14.626845\"\n        },\n        {\n            \"id\": 4,\n            \"temperatureC\": 24.75,\n            \"humidityPct\": 56.3,\n            \"waterLevelPct\": 72,\n            \"createdAt\": \"2025-10-14T18:27:12.89187\"\n        },\n        {\n            \"id\": 3,\n            \"temperatureC\": 24.75,\n            \"humidityPct\": 56.3,\n            \"waterLevelPct\": 72,\n            \"createdAt\": \"2025-10-14T18:27:11.541623\"\n        },\n        {\n            \"id\": 2,\n            \"temperatureC\": 24.75,\n            \"humidityPct\": 56.3,\n            \"waterLevelPct\": 72,\n            \"createdAt\": \"2025-10-14T18:05:58.226266\"\n        },\n        {\n            \"id\": 1,\n            \"temperatureC\": 24.75,\n            \"humidityPct\": 56.3,\n            \"waterLevelPct\": 72,\n            \"createdAt\": \"2025-10-14T18:05:22.303075\"\n        }\n    ],\n    \"pageable\": {\n        \"pageNumber\": 0,\n        \"pageSize\": 20,\n        \"sort\": {\n            \"empty\": false,\n            \"sorted\": true,\n            \"unsorted\": false\n        },\n        \"offset\": 0,\n        \"paged\": true,\n        \"unpaged\": false\n    },\n    \"last\": true,\n    \"totalElements\": 16,\n    \"totalPages\": 1,\n    \"first\": true,\n    \"size\": 20,\n    \"number\": 0,\n    \"sort\": {\n        \"empty\": false,\n        \"sorted\": true,\n        \"unsorted\": false\n    },\n    \"numberOfElements\": 16,\n    \"empty\": false\n}"
+				}
+			]
+		},
+		{
+			"name": "GetActuators",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:8080/v1/api/actuators"
+			},
+			"response": [
+				{
+					"name": "New Request",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": "http://localhost:8080/v1/api/actuators"
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "",
+					"header": [
+						{
+							"key": "Vary",
+							"value": "Origin"
+						},
+						{
+							"key": "Vary",
+							"value": "Access-Control-Request-Method"
+						},
+						{
+							"key": "Vary",
+							"value": "Access-Control-Request-Headers"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "X-XSS-Protection",
+							"value": "0"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-cache, no-store, max-age=0, must-revalidate"
+						},
+						{
+							"key": "Pragma",
+							"value": "no-cache"
+						},
+						{
+							"key": "Expires",
+							"value": "0"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Date",
+							"value": "Thu, 16 Oct 2025 17:33:46 GMT"
+						},
+						{
+							"key": "Keep-Alive",
+							"value": "timeout=60"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"pumpOn\": false,\n    \"fanOn\": true,\n    \"createdAt\": \"2025-10-14T17:56:37.054596\",\n    \"updatedAt\": \"2025-10-14T18:22:45.234283\"\n}"
+				}
+			]
+		},
+		{
+			"name": "TurnOnPump",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"on\": true}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8080/v1/api/actuators/pump"
+			},
+			"response": [
+				{
+					"name": "TurnOnPump",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"on\": true}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/v1/api/actuators/pump"
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "",
+					"header": [
+						{
+							"key": "Vary",
+							"value": "Origin"
+						},
+						{
+							"key": "Vary",
+							"value": "Access-Control-Request-Method"
+						},
+						{
+							"key": "Vary",
+							"value": "Access-Control-Request-Headers"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "X-XSS-Protection",
+							"value": "0"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-cache, no-store, max-age=0, must-revalidate"
+						},
+						{
+							"key": "Pragma",
+							"value": "no-cache"
+						},
+						{
+							"key": "Expires",
+							"value": "0"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Date",
+							"value": "Thu, 16 Oct 2025 17:33:58 GMT"
+						},
+						{
+							"key": "Keep-Alive",
+							"value": "timeout=60"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"pumpOn\": true,\n    \"fanOn\": true,\n    \"createdAt\": \"2025-10-14T17:56:37.054596\",\n    \"updatedAt\": \"2025-10-14T18:22:45.234283\"\n}"
+				}
+			]
+		},
+		{
+			"name": "TurnOffPumButton",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"on\": false}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8080/v1/api/actuators/pump"
+			},
+			"response": [
+				{
+					"name": "TurnOffPumButton",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"on\": false}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/v1/api/actuators/pump"
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "",
+					"header": [
+						{
+							"key": "Vary",
+							"value": "Origin"
+						},
+						{
+							"key": "Vary",
+							"value": "Access-Control-Request-Method"
+						},
+						{
+							"key": "Vary",
+							"value": "Access-Control-Request-Headers"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "X-XSS-Protection",
+							"value": "0"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-cache, no-store, max-age=0, must-revalidate"
+						},
+						{
+							"key": "Pragma",
+							"value": "no-cache"
+						},
+						{
+							"key": "Expires",
+							"value": "0"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Date",
+							"value": "Thu, 16 Oct 2025 17:34:08 GMT"
+						},
+						{
+							"key": "Keep-Alive",
+							"value": "timeout=60"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"pumpOn\": false,\n    \"fanOn\": true,\n    \"createdAt\": \"2025-10-14T17:56:37.054596\",\n    \"updatedAt\": \"2025-10-16T19:33:58.115459\"\n}"
+				}
+			]
+		},
+		{
+			"name": "DasboardStartistics",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:8080/v1/api/dashboard/summary"
+			},
+			"response": [
+				{
+					"name": "New Request",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": "http://localhost:8080/v1/api/dashboard/summary"
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "",
+					"header": [
+						{
+							"key": "Vary",
+							"value": "Origin"
+						},
+						{
+							"key": "Vary",
+							"value": "Access-Control-Request-Method"
+						},
+						{
+							"key": "Vary",
+							"value": "Access-Control-Request-Headers"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "X-XSS-Protection",
+							"value": "0"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-cache, no-store, max-age=0, must-revalidate"
+						},
+						{
+							"key": "Pragma",
+							"value": "no-cache"
+						},
+						{
+							"key": "Expires",
+							"value": "0"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Date",
+							"value": "Thu, 16 Oct 2025 17:34:21 GMT"
+						},
+						{
+							"key": "Keep-Alive",
+							"value": "timeout=60"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"temperatureC\": 28.75,\n    \"humidityPct\": 46.3,\n    \"waterLevelPct\": 100,\n    \"fanOn\": true,\n    \"pumpOn\": false,\n    \"chicksCount\": 2345,\n    \"readingsAt\": \"2025-10-14T18:28:02.415639\"\n}"
+				}
+			]
+		},
+		{
+			"name": "Login",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"usernameOrEmail\": \"talentchigwagwa\",\n  \"password\": \"12345678\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:8080/v1/api/auth/login"
+			},
+			"response": [
+				{
+					"name": "New Request",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"usernameOrEmail\": \"talentchigwagwa\",\n  \"password\": \"12345678\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/v1/api/auth/login"
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "",
+					"header": [
+						{
+							"key": "Vary",
+							"value": "Origin"
+						},
+						{
+							"key": "Vary",
+							"value": "Access-Control-Request-Method"
+						},
+						{
+							"key": "Vary",
+							"value": "Access-Control-Request-Headers"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "X-XSS-Protection",
+							"value": "0"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-cache, no-store, max-age=0, must-revalidate"
+						},
+						{
+							"key": "Pragma",
+							"value": "no-cache"
+						},
+						{
+							"key": "Expires",
+							"value": "0"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Date",
+							"value": "Thu, 16 Oct 2025 17:34:31 GMT"
+						},
+						{
+							"key": "Keep-Alive",
+							"value": "timeout=60"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"id\": 1,\n    \"fullName\": \"Tatenda \",\n    \"username\": \"talentchigwagwa\",\n    \"email\": \"talentchigwagwa@gmail.com\",\n    \"role\": \"USER\",\n    \"enabled\": true,\n    \"locked\": false,\n    \"createdAt\": \"2025-10-14T16:05:52\",\n    \"updatedAt\": \"2025-10-14T17:57:27\"\n}"
+				}
+			]
+		}
+	]
+}
