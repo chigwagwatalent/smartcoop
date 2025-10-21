@@ -16,13 +16,14 @@ public class Actuator {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** 1 = ON, 0 = OFF */
     @Column(name = "pump_on", nullable = false, columnDefinition = "TINYINT(1) NOT NULL DEFAULT 0")
     private boolean pumpOn = false;
 
-    /** 1 = ON, 0 = OFF */
     @Column(name = "fan_on", nullable = false, columnDefinition = "TINYINT(1) NOT NULL DEFAULT 0")
     private boolean fanOn = false;
+
+    @Column(name = "servo_status", nullable = false, columnDefinition = "TINYINT(1) NOT NULL DEFAULT 0")
+    private boolean servoOn = false;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -32,8 +33,6 @@ public class Actuator {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    // Getters & Setters
-
     public Long getId() { return id; }
 
     public boolean isPumpOn() { return pumpOn; }
@@ -41,6 +40,9 @@ public class Actuator {
 
     public boolean isFanOn() { return fanOn; }
     public void setFanOn(boolean fanOn) { this.fanOn = fanOn; }
+
+    public boolean isServoOn() { return servoOn; }
+    public void setServoOn(boolean servoOn) { this.servoOn = servoOn; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

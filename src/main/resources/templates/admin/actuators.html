@@ -6,7 +6,6 @@
   <title>Actuators • Chicken System</title>
   <link th:href="@{/css/theme.css}" rel="stylesheet"/>
 
-  <!-- CSRF for AJAX -->
   <meta name="_csrf" th:content="${_csrf.token}"/>
   <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
 
@@ -86,6 +85,24 @@
                 <button class="btn" id="fanOff">Turn OFF</button>
               </div>
             </div>
+            
+            
+                        <!-- Pump -->
+            <div class="act-card">
+              <div class="act-title">
+                <div id="pumpDot" class="status-dot"
+                     th:classappend="${state.pumpOn} ? ' status-on' : ' status-off'"></div>
+                <div>Feeder Valve</div>
+              </div>
+              <div class="muted" id="pumpLabel" th:text="${state.pumpOn} ? 'ON' : 'OFF'">OFF</div>
+              <div class="actions" style="margin-top:10px">
+                <button class="btn btn-primary" id="pumpToggle">Toggle</button>
+                <button class="btn" id="pumpOn">Turn ON</button>
+                <button class="btn" id="pumpOff">Turn OFF</button>
+              </div>
+            </div>
+                        
+                        
           </div>
 
           <div class="updated">Auto-refreshing status every 3s…</div>

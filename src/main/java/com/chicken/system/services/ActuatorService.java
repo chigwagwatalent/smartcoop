@@ -14,7 +14,6 @@ public class ActuatorService {
         this.repo = repo;
     }
 
-    /** Always return a single row representing current state (create if missing). */
     @Transactional
     public Actuator current() {
         return repo.findTop1ByOrderByUpdatedAtDesc()
