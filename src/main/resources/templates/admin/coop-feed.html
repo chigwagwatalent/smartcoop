@@ -3,51 +3,88 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Coop Camera • Chicken System</title>
+  <title>Coop Camera • Smart Coop</title>
   <link th:href="@{/css/theme.css}" rel="stylesheet"/>
+
   <style>
     :root{
       --brand:#028d18; --brand-2:#4cc36a;
-      --ink:#0b1f11; --bd:#e6eee7; --bg:#f6faf7; --card:#ffffff; --muted:#68806b;
+      --ink:#0b1f11; --muted:#6b7280;
+      --bg:#ffffff; --bg-2:#ffffff;
+      --glass: rgba(255,255,255,.7);
+      --bd:#e6e9ee; --card:#ffffff;
+      --ok:#0ea74a; --warn:#f59e0b; --err:#ef4444;
+      --shadow: 0 14px 40px rgba(2,141,24,.08);
+      --shadow-2: 0 24px 60px rgba(2,141,24,.10);
     }
-    body{ background:var(--bg); font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink) }
-    .page{ width:min(96vw,1600px); margin:0 auto; padding:18px 0 }
-    .layout{ display:grid; grid-template-columns: 280px 1fr; gap:18px }
+
+    /* Page shell */
+    body{
+      margin:0; color:var(--ink); background:var(--bg);
+      font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    .page{ width:min(96vw,1600px); margin:0 auto; padding:28px 0 }
+    .layout{ display:grid; grid-template-columns: 280px 1fr; gap:20px }
     @media (max-width:1100px){ .layout{ grid-template-columns:1fr } }
 
-    .card{ background:var(--card); border:1px solid var(--bd); border-radius:16px; box-shadow:0 16px 36px rgba(2,141,24,.08); padding:16px }
-    .header-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px }
-    .muted{ color:var(--muted) }
+    /* Header */
+    .hero{
+      position:relative; overflow:hidden; margin-bottom:18px;
+      background: linear-gradient(135deg, rgba(2,141,24,.06), rgba(76,195,106,.04));
+      border:1px solid var(--bd); border-radius:18px; padding:18px;
+      box-shadow: var(--shadow);
+    }
+    .hero h2{ margin:0; font-weight:900; letter-spacing:.2px }
+    .sub{ color:var(--muted); margin-top:4px }
 
-    .btn{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:12px; border:1px solid var(--bd); background:#fff; font-weight:800; cursor:pointer }
-    .btn:hover{ background:#f2faf3 }
-    .btn-primary{ background:linear-gradient(135deg,var(--brand),var(--brand-2)); color:#fff; border:0; box-shadow:0 12px 24px rgba(2,141,24,.22) }
+    /* Card */
+    .card{
+      background: var(--card);
+      border:1px solid var(--bd); border-radius:18px; padding:16px;
+      box-shadow: var(--shadow-2);
+    }
 
+    /* Viewport */
     .viewport{
-      position:relative;
-      border:1px solid var(--bd);
-      border-radius:16px;
-      overflow:hidden;
-      background:#000;
-      aspect-ratio: 16/9;           /* keeps a pleasant frame even before the stream appears */
-      max-height: 72vh;
+      position:relative; border-radius:14px; overflow:hidden;
+      background:#000; border:1px solid var(--bd);
+      aspect-ratio: 16/9; max-height: 78vh;
+      cursor: zoom-in; transition: box-shadow .25s ease, transform .25s ease;
+      box-shadow: 0 12px 30px rgba(17,24,39,.08);
     }
-    .viewport img, .viewport video{
-      width:100%; height:100%; object-fit:contain; display:block; background:#000;
+    .viewport:hover{ transform: translateY(-1px); box-shadow: 0 18px 40px rgba(17,24,39,.12) }
+    .viewport img{ width:100%; height:100%; object-fit:contain; display:block; background:#000; }
+
+    /* Loading shimmer (light) */
+    .skeleton{
+      position:absolute; inset:0; background:
+        linear-gradient(90deg, rgba(255,255,255,0) 0%,
+                               rgba(2,141,24,.10) 50%,
+                               rgba(255,255,255,0) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.8s infinite;
+      opacity:.45; pointer-events:none;
     }
-    .overlay{
-      position:absolute; inset:auto 12px 12px auto; display:flex; gap:8px;
-    }
-    .small{ font-size:.9rem }
+    @keyframes shimmer{ 0%{background-position:-100% 0} 100%{background-position:100% 0} }
+
+    /* Status pill */
+    .overlay{ position:absolute; inset:12px 12px auto auto; display:flex; gap:8px; z-index:3 }
     .pill{
-      display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; border:1px solid var(--bd); background:#fff; font-weight:700
+      display:inline-flex; align-items:center; gap:8px; padding:7px 12px;
+      border-radius:999px; border:1px solid var(--bd); background:#ffffffdd;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      font-weight:800; letter-spacing:.2px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 6px 16px rgba(0,0,0,.06);
+      color:var(--ink);
     }
-    @media print{
-      .nav-wrap, aside, .header-row, .overlay, footer{ display:none !important }
-      body{ background:#fff }
-      .page{ width:100%; margin:0; padding:0 }
-      .card{ border:1px solid #ddd; box-shadow:none }
-    }
+    .dot{ width:10px; height:10px; border-radius:50%; box-shadow:0 0 0 2px rgba(0,0,0,.07) inset }
+    .live  .dot{ background:var(--ok) }
+    .warn  .dot{ background:var(--warn) }
+    .error .dot{ background:var(--err) }
+
+    /* Footer hints */
+    .hints{ color:var(--muted); font-size:.92rem; margin-top:12px }
+    code{ padding:.15rem .35rem; border-radius:6px; background:#f7fafc; border:1px solid var(--bd) }
   </style>
 </head>
 <body>
@@ -56,40 +93,34 @@
 
   <div class="page">
     <div class="layout">
-      <!-- Sidebar (no specific active key; you can change to sidebar('camera') if you add that link) -->
+      <!-- Sidebar -->
       <div th:replace="~{common/sidebar :: sidebar('dashboard')}"></div>
 
       <!-- Content -->
       <main style="align-self:start">
+        <div class="hero">
+          <h2>Coop Camera</h2>
+          <div class="sub">Live view • Click the video to toggle fullscreen</div>
+        </div>
+
         <div class="card">
-          <div class="header-row">
-            <div>
-              <h2 style="margin:0">Coop Camera</h2>
-              <div class="muted small">Live feed from your coop camera</div>
-            </div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap">
-              <button type="button" id="startBtn" class="btn btn-primary">▶ Start</button>
-              <button type="button" id="stopBtn" class="btn">⏹ Stop</button>
-              <button type="button" class="btn" onclick="toggleFullscreen()">⤢ Fullscreen</button>
-              <button type="button" class="btn" onclick="window.print()">🖨 Print</button>
-            </div>
-          </div>
-
-          <div class="viewport" id="viewport">
-            <!-- Using <img> works great for MJPEG streams (continuous multipart/x-mixed-replace). -->
-            <img id="camImg" alt="Coop camera stream" style="display:none" />
-            <!-- Optional <video> element left here if your camera actually provides an MP4/HLS—most IP cams won’t via raw HTTP. -->
-            <video id="camVideo" playsinline autoplay muted controls style="display:none"></video>
-
+          <div class="viewport" id="viewport" title="Click to toggle fullscreen">
+            <!-- Status -->
             <div class="overlay">
-              <span class="pill" id="statusPill">Status: Stopped</span>
+              <span class="pill warn" id="statusPill"><span class="dot"></span><span id="statusText">Connecting…</span></span>
             </div>
+
+            <!-- Shimmer while loading -->
+            <div class="skeleton" id="skeleton"></div>
+
+            <!-- MJPEG image stream -->
+            <img id="camImg" alt="Coop camera stream" />
           </div>
 
-          <div style="margin-top:10px" class="muted small">
-            If you don’t see video: ensure the camera is reachable at
-            <code th:text="${cameraUrl}">http://192.168.0.1:567</code>
-            and it serves an MJPEG or browser-playable stream. For RTSP feeds, use a gateway (e.g. ffmpeg/rtsp-simple-server) to convert to HLS/MJPEG.
+          <div class="hints">
+            Stream: <code th:text="${cameraUrl} + '/stream'">http://esp32cam.local:567/stream</code> ·
+            Health: <code th:text="${cameraUrl} + '/health'">http://esp32cam.local:567/health</code> ·
+            Shot: <code th:text="${cameraUrl} + '/snapshot'">http://esp32cam.local:567/snapshot</code>
           </div>
         </div>
       </main>
@@ -99,81 +130,84 @@
   <!-- Footer -->
   <div th:replace="~{common/footer :: footer}"></div>
 
-  <script th:inline="none">
-    const cameraBase = /*[[${cameraUrl}]]*/ 'http://192.168.0.1:567';
+  <script th:inline="javascript">
+    /*<![CDATA[*/
+    const cameraBase = /*[[${cameraUrl}]]*/ 'http://esp32cam.local:567';
+    const streamUrl  = cameraBase + '/stream';
+    const healthUrl  = cameraBase + '/health';
 
-    // If your camera needs a specific path (e.g. /mjpeg, /video), put it here:
-    const cameraStreamUrl = cameraBase; // e.g. `${cameraBase}/mjpeg`
+    const viewport   = document.getElementById('viewport');
+    const imgEl      = document.getElementById('camImg');
+    const skeleton   = document.getElementById('skeleton');
+    const pill       = document.getElementById('statusPill');
+    const statusTxt  = document.getElementById('statusText');
 
-    const imgEl   = document.getElementById('camImg');
-    const vidEl   = document.getElementById('camVideo');
-    const statusP = document.getElementById('statusPill');
-    const startBtn= document.getElementById('startBtn');
-    const stopBtn = document.getElementById('stopBtn');
-
-    // We default to MJPEG via <img>. If you truly have MP4/HLS, swap to video logic below.
-    let usingImage = true;
-    let started = false;
-
-    function setStatus(txt){ statusP.textContent = 'Status: ' + txt; }
-
-    function startStream(){
-      if (started) return;
-      started = true;
-      setStatus('Connecting…');
-      // Bust caches by appending a moving query. Many MJPEG cameras ignore, but it helps snapshots.
-      const bust = 't=' + Date.now();
-      if (usingImage) {
-        vidEl.pause(); vidEl.src = ''; vidEl.style.display = 'none';
-        imgEl.src = cameraStreamUrl + (cameraStreamUrl.includes('?') ? '&' : '?') + bust;
-        imgEl.style.display = 'block';
-      } else {
-        imgEl.style.display = 'none'; imgEl.src = '';
-        vidEl.style.display = 'block';
-        if (vidEl.src !== cameraStreamUrl) vidEl.src = cameraStreamUrl;
-        vidEl.play().catch(()=>{/* ignore */});
-      }
-      setStatus('Live');
+    function setState(kind, text){
+      pill.classList.remove('live','warn','error');
+      pill.classList.add(kind);
+      statusTxt.textContent = text;
     }
 
-    function stopStream(){
-      if (!started) return;
-      started = false;
-      if (usingImage) {
-        imgEl.src = '';
-        imgEl.style.display = 'none';
-      } else {
-        vidEl.pause(); vidEl.removeAttribute('src'); vidEl.load();
-        vidEl.style.display = 'none';
-      }
-      setStatus('Stopped');
+    function startImg(){
+      imgEl.src = streamUrl + (streamUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
     }
 
-    function toggleFullscreen(){
-      const el = document.getElementById('viewport');
+    async function pingHealth(timeoutMs = 2500){
+      try{
+        const ctl = new AbortController();
+        const t = setTimeout(()=>ctl.abort(), timeoutMs);
+        const r = await fetch(healthUrl, {signal: ctl.signal, mode:'cors', cache:'no-store'});
+        clearTimeout(t);
+        return r.ok;
+      }catch(_){ return false; }
+    }
+
+    // Auto retry with backoff
+    let retry = 0;
+    async function boot(){
+      setState('warn','Checking camera…');
+      const ok = await pingHealth();
+      if(!ok){
+        setState('error','No response — retrying…');
+      }else{
+        setState('warn','Connecting…');
+      }
+      skeleton.style.display = 'block';
+      startImg();
+    }
+
+    imgEl.addEventListener('load', () => {
+      skeleton.style.display = 'none';
+      setState('live','Live');
+      retry = 0;
+    });
+
+    imgEl.addEventListener('error', async () => {
+      skeleton.style.display = 'block';
+      setState('error','Stream lost — reconnecting…');
+      retry = Math.min(retry + 1, 6);
+      const delay = 600 * retry; // backoff
+      setTimeout(()=> startImg(), delay);
+    });
+
+    // Gentle keep-alive
+    setInterval(() => {
+      if (pill.classList.contains('live')){
+        imgEl.src = streamUrl + (streamUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+      }
+    }, 60000);
+
+    // Click to toggle fullscreen
+    viewport.addEventListener('click', () => {
       if (!document.fullscreenElement) {
-        el.requestFullscreen?.();
+        viewport.requestFullscreen?.();
       } else {
         document.exitFullscreen?.();
       }
-    }
+    });
 
-    startBtn.addEventListener('click', startStream);
-    stopBtn.addEventListener('click',  stopStream);
-
-    // Auto-start on load
-    document.addEventListener('DOMContentLoaded', startStream);
-
-    // If the image fails (404/connection), show stopped state
-    imgEl.addEventListener('error', () => setStatus('Error (check camera URL)'));
-
-    // Optional: keep-alive ticker for cams that drop after inactivity
-    setInterval(() => {
-      if (started && usingImage) {
-        // poke by resetting src with a new cache-buster every 60s
-        imgEl.src = cameraStreamUrl + (cameraStreamUrl.includes('?') ? '&' : '?') + ('t=' + Date.now());
-      }
-    }, 60000);
+    document.addEventListener('DOMContentLoaded', boot);
+    /*]]>*/
   </script>
 </body>
 </html>
